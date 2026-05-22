@@ -24,7 +24,7 @@ module tb_uvm_top;
 
     // DUT Instantiation
     riscv_top dut (
-    .clk_en(1'b1),
+        .clk_en(1'b1),
         .clk(clk),
         .rst_n(rst_n)
     );
@@ -33,36 +33,38 @@ module tb_uvm_top;
     bind riscv_top riscv_if bound_if (
         .clk(clk),
         .rst_n(rst_n),
-        .pc_out(pc_out_w),
-        .instruction(instruction_w),
-        .reg_write(reg_write_w),
-        .rd_addr(instruction_w[11:7]),
-        .rd_data(wb_data_w),
-        .mem_write(mem_write_w),
-        .mem_read(mem_read_w),
-        .alu_result(alu_result_w),
-        .write_data(rs2_data_w),
-        .csr_addr(instruction_w[31:20]),
-        .csr_wdata(csr_wdata_w),
-        .csr_rdata(csr_rdata_w),
-        .csr_op(csr_op_w),
-        .csr_write(csr_write_w),
-        .exception(exception_w),
-        .exception_cause(exception_cause_w),
-        .mret_exec(mret_exec_w),
-        .fp_we(fp_we_w),
-        .fp_rd_addr(instruction_w[11:7]),
-        .fp_rd_data(fp_wb_data_w),
-        .fp_rs1_data(fp_rs1_data_w),
-        .fp_rs2_data(fp_rs2_data_w),
-        .fp_rs3_data(fp_rs3_data_w),
-        .fcsr_rm(fcsr_rm_w),
-        .fflags_update(fp_fflags_w),
-        .fp_alu_result(fp_alu_result_w),
-        .amo_en(amo_en_w),
-        .amo_op(amo_op_w),
+        .pc_ex(pc_ex),
+        .instruction_ex(instruction_ex),
+        .fp_rs1_data_ex(fp_rs1_data_ex),
+        .fp_rs3_data_ex(fp_rs3_data_ex),
+        .pc_mem(pc_mem),
+        .instruction_mem(instruction_mem),
+        .reg_write_mem(reg_write_mem),
+        .rd_addr_mem(instruction_mem[11:7]),
+        .mem_write_mem(mem_write_mem),
+        .mem_read_mem(mem_read_mem),
+        .alu_result_mem(alu_result_mem),
+        .write_data_mem(rs2_data_mem),
+        .csr_addr_mem(instruction_mem[31:20]),
+        .csr_wdata_mem(csr_wdata_mem),
+        .csr_rdata_mem(csr_rdata_mem),
+        .csr_op_mem(csr_op_mem),
+        .csr_write_mem(csr_write_mem),
+        .exception_mem(exception_mem),
+        .exception_cause_mem(exception_cause_mem),
+        .mret_exec_mem(mret_exec_mem),
+        .fp_we_mem(fp_we_mem),
+        .fp_rd_addr_mem(instruction_mem[11:7]),
+        .fp_rs2_data_mem(fp_rs2_data_mem),
+        .fcsr_rm_mem(fcsr_rm_mem),
+        .fflags_update_mem(fp_fflags_mem),
+        .fp_alu_result_mem(fp_alu_result_mem),
+        .amo_en_mem(amo_en_mem),
+        .amo_op_mem(amo_op_mem),
         .reservation_valid(u_dmem.reservation_valid),
-        .reservation_addr(u_dmem.reservation_addr)
+        .reservation_addr(u_dmem.reservation_addr),
+        .rd_data_wb(wb_data_wb),
+        .fp_rd_data_wb(fp_wb_data_wb)
     );
 
     initial begin
@@ -75,6 +77,6 @@ module tb_uvm_top;
 
     initial begin
         $monitor("Time: %0t | PC: %h | Instr: %h | imm_sel: %b | imm_out: %h | alu_a: %h | alu_b: %h | alu_res: %h | rs1: %h",
-                 $time, dut.pc_out_w, dut.instruction_w, dut.imm_sel_w, dut.imm_out_w, dut.alu_operand_a_w, dut.alu_operand_b_w, dut.alu_result_w, dut.rs1_data_w);
+                 $time, dut.pc_ex, dut.instruction_ex, dut.imm_sel_id, dut.imm_out_ex, dut.alu_operand_a_ex, dut.alu_operand_b_ex, dut.alu_result_ex, dut.rs1_data_ex);
     end
 endmodule

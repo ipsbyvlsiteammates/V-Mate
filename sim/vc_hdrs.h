@@ -218,50 +218,6 @@ struct	_vcs_dpi_rsrc_msg_struct	{
  extern unsigned int fsdbTransDPI_get_enum_id(/* OUTPUT */int *state, /* INPUT */const char* enum_var_name);
 
  extern SV_STRING fsdbTransDPI_get_class_str(/* OUTPUT */int *state, /* INPUT */const char* class_var_name, /* INPUT */const char* options);
-
- extern void dpi_f32_add(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_sub(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_mul(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_div(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_add(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_sub(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_mul(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_div(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_mulAdd(/* INPUT */int a, /* INPUT */int b, /* INPUT */int c, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_mulAdd(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */long long c, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_sqrt(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_sqrt(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_to_f32(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_to_f64(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_i32_to_f32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_ui32_to_f32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_i32_to_f64(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_ui32_to_f64(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_to_i32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f32_to_ui32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_to_i32(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
-
- extern void dpi_f64_to_ui32(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 void SdisableFork();
 
 #ifdef __cplusplus

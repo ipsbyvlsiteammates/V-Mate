@@ -9,3 +9,7 @@
 ../rtl/core/icg.v
 ../rtl/core/fpr.v
 ../rtl/core/fp_alu.v
+../rtl/core/pipe_if_id.v
+../rtl/core/pipe_id_ex.v
+../rtl/core/pipe_ex_mem.v
+../rtl/core/pipe_mem_wb.v

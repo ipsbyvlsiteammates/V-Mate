@@ -8,3 +8,7 @@
 ../rtl/core/fp_cvt.sv
 ../rtl/core/alu.v
 ../tb/unit/tb_alu.sv
+../rtl/core/pipe_if_id.v
+../rtl/core/pipe_id_ex.v
+../rtl/core/pipe_ex_mem.v
+../rtl/core/pipe_mem_wb.v
