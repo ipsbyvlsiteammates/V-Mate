@@ -1,0 +1,3 @@
+Command Line: /CAD/Synopsys/vcs/X-2025.06-SP2/linux64/bin/elabcom -simflow -KDBRESOLVER -simvdaidir /home/guy/Sagi/riscv_processor/sim/simv_riscv_top.daidir -saveLevel -enable_vfsXCmp -enable_smXCmp -ssv -ssy -q -logdir /home/guy/Sagi/riscv_processor/sim/simv_riscv_top.daidir/kdbresolverLog -elabcom_partial_load
+uname(Linux aai-rocky1 4.18.0-553.89.1.el8_10.x86_64 #1 SMP Fri Dec 12 10:42:53 UTC 2025 x86_64)
+au time 0.054545 0.024668 0.020299 delta 102477824 102477824 total 362717184 362717184

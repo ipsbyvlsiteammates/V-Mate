@@ -1,0 +1,10 @@
+../rtl/core/fp_pkg.sv
+../rtl/core/fp_unpack.sv
+../rtl/core/fp_round_pack.sv
+../rtl/core/fp_sgnj.sv
+../rtl/core/fp_cmp.sv
+../rtl/core/fp_fma.sv
+../rtl/core/fp_divsqrt.sv
+../rtl/core/fp_cvt.sv
+../rtl/core/pc.v
+../tb/unit/tb_pc.sv

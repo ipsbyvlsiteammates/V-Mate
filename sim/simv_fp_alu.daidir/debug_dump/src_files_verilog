@@ -1,0 +1,3 @@
+/home/guy/Sagi/riscv_processor/rtl/core/fp_alu.v
+/home/guy/Sagi/riscv_processor/rtl/core/icg.v
+/home/guy/Sagi/riscv_processor/tb/unit/tb_fp_alu.sv

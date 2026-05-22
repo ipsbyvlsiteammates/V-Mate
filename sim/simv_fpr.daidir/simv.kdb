@@ -1,0 +1,25 @@
+rc file Version 1.0
+
+[Design]
+COMPILE_PATH=/home/guy/Sagi/riscv_processor/sim
+VCS_HOME=/CAD/Synopsys/vcs/X-2025.06-SP2
+VERDI_HOME=/CAD/Synopsys/verdi/X-2025.06-SP2
+SystemC=FALSE
+UUM=FALSE
+KDB=TRUE
+USE_NOVAS_HOME=FALSE
+COSIM=FALSE
+ENV="SYNOPSYS_SIM_SETUP=/CAD/Synopsys/vcs/X-2025.06-SP2/bin/synopsys_sim.setup" 
+TOP=tb_fpr 
+OPTION=-ssv -ssy 
+ELAB_OPTION=-ssv -ssy 
+ELAB=TRUE
+COMMON_ELAB=TRUE
+SIMV_WRAPPER=FALSE
+ELABCOM_PARTAIL_LOAD=TRUE
+[Value]
+WREALX=ffff534e50535f58
+WREALZ=ffff534e50535f5a
+
+[CompInfo]
+FLOW_OPTS=-kdb=common_elab -ssv -ssy 

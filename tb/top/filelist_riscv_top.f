@@ -1,0 +1,9 @@
+../rtl/core/alu.v
+../rtl/core/register_file.v
+../rtl/core/imm_gen.v
+../rtl/core/pc.v
+../rtl/core/control_unit.v
+../rtl/mem/imem.v
+../rtl/mem/dmem.v
+../rtl/core/riscv_top.v
+../tb/top/tb_riscv_top.sv

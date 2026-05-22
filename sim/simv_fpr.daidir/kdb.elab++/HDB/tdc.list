@@ -1,0 +1,3 @@
+../rtl/core/fpr.v
+../rtl/core/icg.v
+../tb/unit/tb_fpr.sv

@@ -1,0 +1,28 @@
+Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detected on the machine. To enable $save functionality, ASLR will be switched off and simv re-executed.
+Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
+Chronologic VCS simulator copyright 1991-2025
+Contains Synopsys proprietary information.
+Compiler version X-2025.06-SP2_Full64; Runtime version X-2025.06-SP2_Full64;  May 20 22:04 2026
+
+Warning-[STASKW_RMIEAFK] Illegal entry
+../tb/top/tb_arch_test.sv, 28
+  More number of entries found at file imem.hex line 131073 while executing 
+  $readmem.
+  Please ensure that the file has proper number of entries.
+  The array name is u_imem__mem , size 131072.
+
+
+Warning-[STASKW_RMIEAFK] Illegal entry
+../tb/top/tb_arch_test.sv, 29
+  More number of entries found at file dmem.hex line 524289 while executing 
+  $readmem.
+  Please ensure that the file has proper number of entries.
+  The array name is mem , size 524288.
+
+TEST FAILED with code 3
+$finish called from file "../tb/top/tb_arch_test.sv", line 48.
+$finish at simulation time             10795000
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 10795000 ps
+CPU Time:      0.340 seconds;       Data structure size:   0.0Mb
+Wed May 20 22:04:03 2026
