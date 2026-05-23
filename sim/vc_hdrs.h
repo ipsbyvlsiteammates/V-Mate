@@ -40,18 +40,6 @@ typedef struct VeriC_Descriptor *vc_handle;
 
 #endif /* _VC_TYPES_ */
 
-typedef struct _vcs_dpi_rsrc_msg_struct	rsrc_msg_struct;
-
-struct	_vcs_dpi_rsrc_msg_struct	{
-	SV_STRING	scope_name;
-	SV_STRING	field_name;
-	SV_STRING	type_name;
-	SV_STRING	action;
-	SV_STRING	accessor;
-	SV_STRING	resource;
-};
-
-
 
  extern int vc_uvmOnewayHash(/* INPUT */const char* string_in, /* INPUT */int seed);
 
@@ -93,131 +81,49 @@ struct	_vcs_dpi_rsrc_msg_struct	{
 
  extern SV_STRING uvm_glob_to_re(/* INPUT */const char* glob);
 
- extern int parse_rsrc_msg(/* INPUT */const char* message, /* OUTPUT */rsrc_msg_struct *_msg_fields);
+ extern void dpi_f32_add(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern int parse_phase_msg_by_chandle(/* INPUT */const char* message, /* OUTPUT */void* *domain, /* OUTPUT */void* *schedule, /* OUTPUT */void* *phase);
+ extern void dpi_f32_sub(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern int find_substr_by_C(/* INPUT */const char* org_str, /* INPUT */const char* search_str);
+ extern void dpi_f32_mul(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern SV_STRING verdi_dump_resource_value(/* INPUT */const char* rsrc, /* OUTPUT */void* *rtn_str_ptr);
+ extern void dpi_f32_div(/* INPUT */int a, /* INPUT */int b, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern int verdi_dump_component_interface(/* INPUT */const char* scope_name, /* INPUT */int streamId);
+ extern void dpi_f64_add(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern SV_STRING verdi_upper_scope(/* INPUT */const char* inst_scope_name, /* OUTPUT */void* *upper_scope_pointer);
+ extern void dpi_f64_sub(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern SV_STRING verdi_dpi_get_c_string_by_chandle(/* INPUT */void* c_str_ptr);
+ extern void dpi_f64_mul(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern void verdi_dpi_free_c_string_by_chandle(/* INPUT */void* c_str_ptr);
+ extern void dpi_f64_div(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern void verdi_dhier_interface_by_comp_hier(/* INPUT */const char* var_name);
+ extern void dpi_f32_mulAdd(/* INPUT */int a, /* INPUT */int b, /* INPUT */int c, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern void verdi_dhier_interface_by_classdefn(/* INPUT */const char* var_name);
+ extern void dpi_f64_mulAdd(/* INPUT */long long a, /* INPUT */long long b, /* INPUT */long long c, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern void retrieve_reg_def_class(/* INPUT */const char* var_name, /* INPUT */int _handle, /* INPUT */int is_objid_only);
+ extern void dpi_f32_sqrt(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern SV_STRING retrieve_def_class(/* INPUT */const char* var_name, /* OUTPUT */int *objid);
+ extern void dpi_f64_sqrt(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern int record_reg_decl_name(/* INPUT */int handle, /* INPUT */const char* parent_var_name, /* INPUT */const char* var_name, /* INPUT */const char* obj_name);
+ extern void dpi_f64_to_f32(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern int check_is_sequencer();
+ extern void dpi_f32_to_f64(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern SV_STRING remove_array_index(/* INPUT */const char* name_w_ary_idx, /* OUTPUT */void* *name_c_ptr);
+ extern void dpi_i32_to_f32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern int pli_dhier_begin_event(/* INPUT */const char* streamN);
+ extern void dpi_ui32_to_f32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern void pli_trans_add_class_name_attr(/* INPUT */const char* scope_name, /* INPUT */const char* attribute_value, /* INPUT */int streamId);
+ extern void dpi_i32_to_f64(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern void pli_trans_add_vif_attr(/* INPUT */const char* scope_name, /* INPUT */int idx, /* INPUT */const char* attribute_value, /* INPUT */int streamId);
+ extern void dpi_ui32_to_f64(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */long long *res, /* OUTPUT */char *fflags);
 
- extern void pli_dhier_set_label(/* INPUT */int handle, /* INPUT */const char* label);
+ extern void dpi_f32_to_i32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern void pli_dhier_add_attribute(/* INPUT */int handle, /* INPUT */const char* attr_name, /* INPUT */const char* attr_value);
+ extern void dpi_f32_to_ui32(/* INPUT */int a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern void pli_dhier_add_attribute_int(/* INPUT */int handle, /* INPUT */const char* attr_name, /* INPUT */int attr_value);
+ extern void dpi_f64_to_i32(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 
- extern void pli_dhier_end_event(/* INPUT */int handle);
-
- extern void fsdbTransDPI_scope_add_logicvec_attribute(/* OUTPUT */int *state, /* INPUT */const char* scope_fullname, /* INPUT */const char* attribute_name, const /* INPUT */svLogicVecVal *attribute, /* INPUT */int numbit, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_scope_add_int_attribute(/* OUTPUT */int *state, /* INPUT */const char* scope_fullname, /* INPUT */const char* attribute_name, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_scope_add_string_attribute(/* OUTPUT */int *state, /* INPUT */const char* scope_fullname, /* INPUT */const char* attribute_name, /* INPUT */const char* attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_scope_add_real_attribute(/* OUTPUT */int *state, /* INPUT */const char* scope_fullname, /* INPUT */const char* attribute_name, /* INPUT */double attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_scope_add_enum_int_attribute(/* OUTPUT */int *state, /* INPUT */const char* scope_fullname, /* INPUT */const char* attribute_name, /* INPUT */unsigned int enum_id, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern int fsdbTransDPI_create_stream_begin(/* OUTPUT */int *state, /* INPUT */const char* stream_fullname, /* INPUT */const char* description, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_define_logicvec_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, const /* INPUT */svLogicVecVal *attribute, /* INPUT */int numbit, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_define_int_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_define_string_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */const char* attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_define_real_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */double attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_define_enum_int_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */unsigned int enum_id, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_stream_add_logicvec_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, const /* INPUT */svLogicVecVal *attribute, /* INPUT */int numbit, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_stream_add_int_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_stream_add_string_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */const char* attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_stream_add_real_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */double attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_stream_add_enum_int_attribute(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* attribute_name, /* INPUT */unsigned int enum_id, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_create_stream_end(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* options);
-
- extern int fsdbTransDPI_get_ended_stream_id(/* OUTPUT */int *state, /* INPUT */const char* stream_fullname, /* INPUT */const char* options);
-
- extern long long fsdbTransDPI_begin(/* OUTPUT */int *state, /* INPUT */int sid, /* INPUT */const char* trans_type, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_set_label(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* label, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_tag(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* tag, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_logicvec_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, const /* INPUT */svLogicVecVal *attribute, /* INPUT */int numbit, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_bitvec_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, const /* INPUT */svBitVecVal *attribute, /* INPUT */int numbit, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_int_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_shortint_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */short int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_longint_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */long long attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_string_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */const char* attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_real_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */double attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_enum_int_attribute(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */unsigned int enum_id, /* INPUT */int attribute, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_logicvec_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, const /* INPUT */svLogicVecVal *attribute, /* INPUT */int numbit, const /* INPUT */svLogicVecVal *expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_bitvec_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, const /* INPUT */svBitVecVal *attribute, /* INPUT */int numbit, const /* INPUT */svBitVecVal *expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_int_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */int attribute, /* INPUT */int expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_shortint_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */short int attribute, /* INPUT */short int expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_longint_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */long long attribute, /* INPUT */long long expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_string_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */const char* attribute, /* INPUT */const char* expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_real_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */double attribute, /* INPUT */double expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_enum_int_attribute_with_expected_value(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* attribute_name, /* INPUT */unsigned int enum_id, /* INPUT */int attribute, /* INPUT */int expected_val, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_end(/* OUTPUT */int *state, /* INPUT */long long tid, /* INPUT */const char* options);
-
- extern void fsdbTransDPI_add_relation(/* OUTPUT */int *state, /* INPUT */const char* rel_name, /* INPUT */long long master_tid, /* INPUT */long long slave_tid, /* INPUT */const char* options);
-
- extern unsigned int fsdbTransDPI_get_enum_id(/* OUTPUT */int *state, /* INPUT */const char* enum_var_name);
-
- extern SV_STRING fsdbTransDPI_get_class_str(/* OUTPUT */int *state, /* INPUT */const char* class_var_name, /* INPUT */const char* options);
+ extern void dpi_f64_to_ui32(/* INPUT */long long a, /* INPUT */char rm, /* OUTPUT */int *res, /* OUTPUT */char *fflags);
 void SdisableFork();
 
 #ifdef __cplusplus

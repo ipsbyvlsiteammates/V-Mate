@@ -1,12 +1,10 @@
 `timescale 1ns/1ps
-
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import riscv_uvm_pkg::*;
 `include "riscv_if.sv"
 
 module tb_uvm_top;
-
     logic clk;
     logic rst_n;
 
@@ -70,13 +68,9 @@ module tb_uvm_top;
     initial begin
         // Pass the bound interface to UVM config DB
         uvm_config_db#(virtual riscv_if)::set(null, "*", "vif", dut.bound_if);
-        
         // Run UVM test
         run_test("riscv_test");
     end
 
-    initial begin
-        $monitor("Time: %0t | PC: %h | Instr: %h | imm_sel: %b | imm_out: %h | alu_a: %h | alu_b: %h | alu_res: %h | rs1: %h",
-                 $time, dut.pc_ex, dut.instruction_ex, dut.imm_sel_id, dut.imm_out_ex, dut.alu_operand_a_ex, dut.alu_operand_b_ex, dut.alu_result_ex, dut.rs1_data_ex);
-    end
+    
 endmodule

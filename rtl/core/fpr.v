@@ -46,8 +46,8 @@ module fpr #(
         end
     end
 
-    assign rs1_data = fpr_array[rs1_addr];
-    assign rs2_data = fpr_array[rs2_addr];
-    assign rs3_data = fpr_array[rs3_addr];
+    assign rs1_data = (we && (rd_addr == rs1_addr)) ? write_data : fpr_array[rs1_addr];
+    assign rs2_data = (we && (rd_addr == rs2_addr)) ? write_data : fpr_array[rs2_addr];
+    assign rs3_data = (we && (rd_addr == rs3_addr)) ? write_data : fpr_array[rs3_addr];
 
 endmodule
