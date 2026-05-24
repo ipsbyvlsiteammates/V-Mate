@@ -218,14 +218,19 @@ module fp_fma (
     logic inf_mul_zero;
     assign inf_mul_zero = (rs1_is_inf & rs2_is_zero) | (rs1_is_zero & rs2_is_inf);
 
+    logic rs1_is_nan, rs2_is_nan, rs3_is_nan;
+    assign rs1_is_nan = rs1_is_snan | rs1_is_qnan;
+    assign rs2_is_nan = rs2_is_snan | rs2_is_qnan;
+    assign rs3_is_nan = rs3_is_snan | rs3_is_qnan;
+
     logic prod_is_inf;
-    assign prod_is_inf = rs1_is_inf | rs2_is_inf;
+    assign prod_is_inf = (rs1_is_inf & ~rs2_is_zero & ~rs2_is_nan) | (rs2_is_inf & ~rs1_is_zero & ~rs1_is_nan);
 
     logic inf_add_opp;
     assign inf_add_opp = prod_is_inf & rs3_is_inf & (prod_sign != add_sign);
 
     logic nv, dz;
-    assign nv = any_snan | inf_mul_zero | inf_add_opp;
+    assign nv = any_snan | (inf_mul_zero & ~rs3_is_inf) | inf_add_opp;
     assign dz = 1'b0;
 
     logic is_nan_res;

@@ -1,23 +1,13 @@
-import sys
 import struct
-
-with open('test.bin', 'rb') as f:
-    data = bytearray(f.read())
-
-target_size = 512 * 1024
-if len(data) < target_size:
-    data.extend(b'\x00' * (target_size - len(data)))
-else:
-    data = data[:target_size]
-
-imem_data = data[:256*1024]
-dmem_data = data[256*1024:]
-
-with open('imem.hex', 'w') as f:
-    for i in range(0, len(imem_data), 4):
-        word = struct.unpack('<I', imem_data[i:i+4])[0]
-        f.write(f'{word:08x}\n')
-
-with open('dmem.hex', 'w') as f:
-    for b in dmem_data:
-        f.write(f'{b:02x}\n')
+with open('full.bin', 'rb') as f:
+    data = f.read()
+data = data.ljust(524288, b'\x00')
+with open('imem.hex', 'w') as f_imem, open('dmem.hex', 'w') as f_dmem:
+    for i in range(0, len(data), 4):
+        word = data[i:i+4]
+        if len(word) < 4:
+            word = word.ljust(4, b'\x00')
+        val = struct.unpack('<I', word)[0]
+        f_imem.write(f"{val:08x}\n")
+    for i in range(len(data)):
+        f_dmem.write(f"{data[i]:02x}\n")

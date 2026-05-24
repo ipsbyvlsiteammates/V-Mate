@@ -26,6 +26,11 @@ module register_file (
     // Internal register storage: 32 registers, each 32 bits wide
     reg [31:0] regs [32];
 
+    initial begin
+        for (integer i = 0; i < 32; i = i + 1) regs[i] = 32'b0;
+    end
+
+
     // Integer for reset loop
     integer i;
 

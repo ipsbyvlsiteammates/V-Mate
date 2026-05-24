@@ -51,13 +51,13 @@ module fp_unpack (
             out.sig = 56'b0;
         end else if (out.is_subnormal) begin
             out.exp = is_fp32 ? 13'sd1 - 13'sd127 : 13'sd1 - 13'sd1023;
-            out.sig = {1'b0, frac_raw, 3'b000};
+            out.sig = is_fp32 ? {1'b0, frac_raw[51:29], 32'b0} : {1'b0, frac_raw, 3'b0};
         end else if (out.is_inf || out.is_nan) begin
             out.exp = 13'sd0;
-            out.sig = {1'b1, frac_raw, 3'b000};
+            out.sig = is_fp32 ? {1'b1, frac_raw[51:29], 32'b0} : {1'b1, frac_raw, 3'b0};
         end else begin
             out.exp = is_fp32 ? signed'({2'b0, exp_raw}) - 13'sd127 : signed'({2'b0, exp_raw}) - 13'sd1023;
-            out.sig = {1'b1, frac_raw, 3'b000};
+            out.sig = is_fp32 ? {1'b1, frac_raw[51:29], 32'b0} : {1'b1, frac_raw, 3'b0};
         end
     end
 endmodule

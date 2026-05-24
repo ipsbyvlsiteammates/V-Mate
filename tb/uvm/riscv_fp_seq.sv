@@ -9,10 +9,33 @@ class riscv_fp_seq extends uvm_sequence #(riscv_txn);
     super.new(name);
   endfunction
   virtual task body();
-    for (int i = 0; i < 50; i++) begin
+    for (int i = 0; i < 1000000; i++) begin
       txn = riscv_txn::type_id::create("txn");
       start_item(txn);
-      if (!txn.randomize()) begin
+      if (!txn.randomize() with {
+        if (i % 5 == 0) {
+          fp_rs1_data inside {
+            64'h0000000000000000,
+            64'h8000000000000000,
+            64'h7FF0000000000000,
+            64'hFFF0000000000000,
+            64'h7FF8000000000000,
+            64'h7FF0000000000001,
+            64'h000FFFFFFFFFFFFF,
+            64'h800FFFFFFFFFFFFF
+          };
+          fp_rs2_data inside {
+            64'h0000000000000000,
+            64'h8000000000000000,
+            64'h7FF0000000000000,
+            64'hFFF0000000000000,
+            64'h7FF8000000000000,
+            64'h7FF0000000000001,
+            64'h000FFFFFFFFFFFFF,
+            64'h800FFFFFFFFFFFFF
+          };
+        }
+      }) begin
         `uvm_error("SEQ", "Randomization failed")
       end
       if (i == 0) begin

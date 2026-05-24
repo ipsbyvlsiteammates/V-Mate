@@ -40,11 +40,11 @@ module tb_arch_test;
 
     logic [31:0] tohost_payload;
     always @(posedge clk) begin
-        if (dut.mem_write_w) begin
-            if (dut.alu_result_w == tohost_addr) begin
-                tohost_payload <= dut.rs2_data_w;
-            end else if (dut.alu_result_w == tohost_addr + 4) begin
-                if (dut.rs2_data_w == 32'd0) begin
+        if (dut.mem_write_ex) begin
+            if (dut.alu_result_ex == tohost_addr) begin
+                tohost_payload <= dut.rs2_data_ex;
+            end else if (dut.alu_result_ex == tohost_addr + 4) begin
+                if (dut.rs2_data_ex == 32'd0) begin
                     if (tohost_payload[0] == 1'b1) begin
                         if (tohost_payload == 32'd1) begin
                             $display("TEST PASSED");
@@ -54,7 +54,7 @@ module tb_arch_test;
                             $finish;
                         end
                     end
-                end else if (dut.rs2_data_w == 32'h01010000) begin
+                end else if (dut.rs2_data_ex == 32'h01010000) begin
                     $write("%c", tohost_payload[7:0]);
                 end
             end
@@ -69,7 +69,7 @@ module tb_arch_test;
     always @(posedge clk) begin
         if (rst_n) begin
             $fdisplay(trace_file, "PC: %h | Instr: %h | rs1_d: %h | rs2_d: %h | alu_res: %h | mem_w: %b | reg_w: %b | csr_w: %b | csr_op: %b | csr_addr: %h | csr_wdata: %h | mscratch: %h", 
-                dut.pc_out_w, dut.instruction_w, dut.rs1_data_w, dut.rs2_data_w, dut.alu_result_w, dut.mem_write_w, dut.reg_write_w, dut.csr_write_w, dut.csr_op_w, dut.instruction_w[31:20], dut.csr_wdata_w, dut.gen_csr.u_csr_file.mscratch_reg);
+                dut.pc_ex, dut.instruction_ex, dut.rs1_data_ex, dut.rs2_data_ex, dut.alu_result_ex, dut.mem_write_ex, dut.reg_write_ex, dut.csr_write_ex, dut.csr_op_ex, dut.instruction_ex[31:20], dut.csr_wdata_ex, dut.gen_csr.u_csr_file.mscratch_reg);
         end
     end
 
@@ -81,9 +81,9 @@ module tb_arch_test;
     end
 
     always @(posedge clk) begin
-        if (rst_n && (dut.fp_we_w || dut.fp_mem_write_w || dut.instruction_w[6:0] == 7'b1010011 || dut.instruction_w[6:0] == 7'b1000011 || dut.instruction_w[6:0] == 7'b1000111 || dut.instruction_w[6:0] == 7'b1001011 || dut.instruction_w[6:0] == 7'b1001111)) begin
+        if (rst_n && (dut.fp_we_ex || dut.fp_mem_write_ex || dut.instruction_ex[6:0] == 7'b1010011 || dut.instruction_ex[6:0] == 7'b1000011 || dut.instruction_ex[6:0] == 7'b1000111 || dut.instruction_ex[6:0] == 7'b1001011 || dut.instruction_ex[6:0] == 7'b1001111)) begin
             $display("FP_TRACE PC: %h | Instr: %h | rs1: %h | rs2: %h | rs3: %h | alu_res: %h | fflags: %b", 
-                dut.pc_out_w, dut.instruction_w, dut.fp_rs1_data_w, dut.fp_rs2_data_w, dut.fp_rs3_data_w, dut.fp_alu_result_w, dut.fp_fflags_w);
+                dut.pc_ex, dut.instruction_ex, dut.fp_rs1_data_ex, dut.fp_rs2_data_ex, dut.fp_rs3_data_ex, dut.fp_alu_result_ex, dut.fp_fflags_ex);
         end
     end
 

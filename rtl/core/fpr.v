@@ -21,6 +21,11 @@ module fpr #(
     localparam FLEN = EXTENSION_D ? 64 : (EXTENSION_F ? 32 : 32);
 
     reg [FLEN-1:0] fpr_array [0:31];
+
+    initial begin
+        for (integer i = 0; i < 32; i = i + 1) fpr_array[i] = {FLEN{1'b0}};
+    end
+
     integer i;
 
     wire cg_en = (!rst_n) | we;

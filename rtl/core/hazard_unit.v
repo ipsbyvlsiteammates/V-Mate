@@ -8,6 +8,11 @@ module hazard_unit (
     input wire pc_sel_ex,
     input wire exception_mem,
     input wire mret_exec_mem,
+    input wire csr_write_ex,
+    input wire csr_write_mem,
+    input wire [1:0] csr_op_id,
+    input wire fp_fflags_we_ex,
+    input wire fp_fflags_we_mem,
     output reg stall_pc,
     output reg stall_if_id,
     output reg flush_if_id,
@@ -20,6 +25,9 @@ module hazard_unit (
     wire load_use_hazard = int_load_use || fp_load_use;
     wire control_hazard = pc_sel_ex;
     wire exception_hazard = exception_mem || mret_exec_mem;
+    wire csr_hazard = csr_write_ex || csr_write_mem;
+    wire csr_read_id = (csr_op_id != 2'b00);
+    wire fflags_hazard = csr_read_id && (fp_fflags_we_ex || fp_fflags_we_mem);
 
     always @(*) begin
         stall_pc = 1'b0;
@@ -37,7 +45,7 @@ module hazard_unit (
         end else if (control_hazard) begin
             flush_if_id = 1'b1;
             flush_id_ex = 1'b1;
-        end else if (load_use_hazard) begin
+        end else if (load_use_hazard || csr_hazard || fflags_hazard) begin
             stall_pc = 1'b1;
             stall_if_id = 1'b1;
             flush_id_ex = 1'b1;

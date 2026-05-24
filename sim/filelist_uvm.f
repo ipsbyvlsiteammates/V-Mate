@@ -28,3 +28,6 @@
 ../rtl/core/fp_alu.v
 ../rtl/core/forwarding_unit.v
 ../rtl/core/hazard_unit.v
+
+../tb/uvm/riscv_cov.sv
+../tb/uvm/riscv_sva.sv

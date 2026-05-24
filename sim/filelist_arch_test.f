@@ -23,3 +23,5 @@
 ../rtl/core/pipe_id_ex.v
 ../rtl/core/pipe_ex_mem.v
 ../rtl/core/pipe_mem_wb.v
+../rtl/core/forwarding_unit.v
+../rtl/core/hazard_unit.v

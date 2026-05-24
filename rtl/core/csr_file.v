@@ -63,7 +63,12 @@ module csr_file #(
 
     assign mepc_out  = mepc_reg;
     assign mtvec_out = mtvec_reg;
-    assign fcsr_rm   = frm_reg;
+    wire [31:0] next_csr_wdata;
+    assign next_csr_wdata = (csr_op == CSR_OP_RW) ? csr_wdata :
+                            (csr_op == CSR_OP_RS) ? (csr_rdata | csr_wdata) :
+                            (csr_op == CSR_OP_RC) ? (csr_rdata & ~csr_wdata) :
+                            csr_rdata;
+    assign fcsr_rm = (csr_write && (csr_addr == CSR_FRM)) ? next_csr_wdata[2:0] : (csr_write && (csr_addr == CSR_FCSR)) ? next_csr_wdata[7:5] : frm_reg;
 
     always @(*) begin
         case (csr_addr)
@@ -84,11 +89,6 @@ module csr_file #(
         endcase
     end
 
-    wire [31:0] next_csr_wdata;
-    assign next_csr_wdata = (csr_op == CSR_OP_RW) ? csr_wdata :
-                            (csr_op == CSR_OP_RS) ? (csr_rdata | csr_wdata) :
-                            (csr_op == CSR_OP_RC) ? (csr_rdata & ~csr_wdata) :
-                            csr_rdata;
 
     wire cg_en = (!rst_n) | exception | mret_exec | csr_write | fp_fflags_we;
     wire gated_clk;

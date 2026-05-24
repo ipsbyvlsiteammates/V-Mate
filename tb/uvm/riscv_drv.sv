@@ -24,10 +24,7 @@ class riscv_drv extends uvm_driver #(riscv_txn);
     forever begin
       seq_item_port.get_next_item(req);
       
-      if (req.hex_file_path != "") begin
-        vif.load_hex(req.hex_file_path);
-        `uvm_info("DRV", $sformatf("Loaded hex file: %s", req.hex_file_path), UVM_LOW)
-      end
+      
 
       wait(vif.rst_n === 1'b1);
       @(posedge vif.clk);

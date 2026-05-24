@@ -107,6 +107,7 @@ class riscv_sb extends uvm_scoreboard;
     logic [31:0] exp_rd_data;
     logic [63:0] exp_fp_rd_data;
     logic [4:0] exp_fflags;
+    logic is_illegal;
     
 
     if (!mem_initialized) begin
@@ -152,6 +153,51 @@ class riscv_sb extends uvm_scoreboard;
     exp_rd_data = 32'h0;
     exp_fp_rd_data = 64'h0;
     exp_fflags = 5'h0;
+
+    is_illegal = 1'b0;
+    
+    case (opcode)
+      7'b0110111, 7'b0010111, 7'b1101111, 7'b1100111, 7'b1100011, 7'b0000011, 7'b0100011, 7'b0010011, 7'b0110011, 7'b0000111, 7'b0100111, 7'b1010011, 7'b1000011, 7'b1000111, 7'b1001011, 7'b1001111, 7'b0101111, 7'b1110011, 7'b0001111: begin
+      end
+      default: is_illegal = 1'b1;
+    endcase
+
+    if (opcode == 7'b0101111) begin
+      if (funct3 != 3'b010 && funct3 != 3'b011) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b1110011) begin
+      if (funct3 == 3'b000) begin
+        if (txn.instruction[31:20] != 12'h000 && txn.instruction[31:20] != 12'h001 && txn.instruction[31:20] != 12'h302) begin
+          is_illegal = 1'b1;
+        end
+      end
+    end
+    if (opcode == 7'b0000111 || opcode == 7'b0100111) begin
+      if (funct3 != 3'b010 && funct3 != 3'b011) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b1010011) begin
+      case (funct7[6:2])
+        5'b00000, 5'b00001, 5'b00010, 5'b00011, 5'b01011, 5'b00100, 5'b00101, 5'b01000, 5'b10100, 5'b11000, 5'b11010, 5'b11100, 5'b11110: ;
+        default: is_illegal = 1'b1;
+      endcase
+    end
+    
+    if (is_illegal) begin
+      if (txn.exception !== 1'b1)
+        `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | Illegal instruction did not assert exception", txn.pc, txn.instruction))
+      if (txn.exception_cause !== 4'h2)
+        `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | Illegal instruction cause mismatch. Exp: 2, Act: %0h", txn.pc, txn.instruction, txn.exception_cause))
+      
+      shadow_csr[CSR_MEPC] = txn.pc;
+      shadow_csr[CSR_MCAUSE] = 32'h2;
+      shadow_csr[CSR_MSTATUS] = {shadow_csr[CSR_MSTATUS][31:8], shadow_csr[CSR_MSTATUS][3], shadow_csr[CSR_MSTATUS][6:0]};
+      shadow_csr[CSR_MSTATUS] = {shadow_csr[CSR_MSTATUS][31:4], 1'b0, shadow_csr[CSR_MSTATUS][2:0]};
+      
+      exp_reg_write = 1'b0;
+      exp_mem_read = 1'b0;
+      exp_mem_write = 1'b0;
+      exp_fp_we = 1'b0;
+    end
 
     case (opcode)
       7'b0110111: begin // LUI
@@ -540,9 +586,11 @@ class riscv_sb extends uvm_scoreboard;
     if (txn.fp_we !== exp_fp_we)
       `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | fp_we mismatch. Exp: %0b, Act: %0b", txn.pc, txn.instruction, exp_fp_we, txn.fp_we))
     
-    if (opcode != 7'b1100011 && opcode != 7'b1101111 && opcode != 7'b1100111 && opcode != 7'b1110011 && opcode != 7'b0101111 && opcode != 7'b0000111 && opcode != 7'b0100111 && opcode != 7'b1010011 && opcode != 7'b1000011 && opcode != 7'b1000111 && opcode != 7'b1001011 && opcode != 7'b1001111) begin
-      if (txn.alu_result !== exp_alu_result)
-        `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | alu_result mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_alu_result, txn.alu_result))
+    if (opcode != 7'b0001111 && opcode != 7'b1100011 && opcode != 7'b1101111 && opcode != 7'b1100111 && opcode != 7'b1110011 && opcode != 7'b0101111 && opcode != 7'b0000111 && opcode != 7'b0100111 && opcode != 7'b1010011 && opcode != 7'b1000011 && opcode != 7'b1000111 && opcode != 7'b1001011 && opcode != 7'b1001111 && opcode != 7'b0001111) begin
+      if (!is_illegal) begin
+        if (txn.alu_result !== exp_alu_result)
+          `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | alu_result mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_alu_result, txn.alu_result))
+      end
     end
 
     if (exp_mem_write && opcode != 7'b0101111 && opcode != 7'b0100111) begin

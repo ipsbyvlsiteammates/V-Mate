@@ -1,66 +1,29 @@
+import os, subprocess, struct
 import sys
-import os
-import subprocess
-
-def main():
-    elf_path = sys.argv[1]
-    if not os.path.exists(elf_path):
-        print(f"Error: ELF file does not exist: {elf_path}")
-        sys.exit(1)
-        
-    nm_cmd = "riscv64-unknown-elf-nm"
-    objcopy_cmd = "riscv64-unknown-elf-objcopy"
-    
-    result = subprocess.run(['bash', '-l', '-c', f"{nm_cmd} {elf_path}"], capture_output=True, text=True)
-    if result.returncode != 0:
-        nm_cmd = "riscv32-unknown-elf-nm"
-        objcopy_cmd = "riscv32-unknown-elf-objcopy"
-        result = subprocess.run(['bash', '-l', '-c', f"{nm_cmd} {elf_path}"], capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"Both nm commands failed.")
-            print(f"Last stderr: {result.stderr}")
-            print(f"Last stdout: {result.stdout}")
-            sys.exit(1)
-            
-    out = result.stdout
-    tohost = ""
-    for line in out.splitlines():
-        if "tohost" in line:
-            tohost = line.split()[0]
-            break
-            
-    if not tohost:
-        print("tohost not found")
-        sys.exit(1)
-        
-    result = subprocess.run(['bash', '-l', '-c', f"{objcopy_cmd} -O binary {elf_path} sim/full.bin"], capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"objcopy failed: {result.stderr}")
-        sys.exit(1)
-    
-    with open("sim/full.bin", "rb") as f:
-        data = f.read()
-    if len(data) < 524288:
-        data += b'\x00' * (524288 - len(data))
-    with open("sim/full.bin", "wb") as f:
-        f.write(data)
-        
-    words = []
-    for i in range(0, len(data), 4):
-        word = data[i:i+4]
-        words.append(f"{int.from_bytes(word, 'little'):08x}")
-        
-    with open("sim/imem.hex", "w") as f:
-        f.write("\n".join(words) + "\n")
-    with open("sim/dmem.hex", "w") as f:
-        f.write("\n".join(words) + "\n")
-        
-    os.chdir("sim")
-    if os.path.exists("trace.log"):
-        os.remove("trace.log")
-    result = subprocess.run(['bash', '-l', '-c', f"./simv_arch_test +TOHOST_ADDR={tohost} > run.log 2>&1"], capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"simv_arch_test returned {result.returncode}")
-
-if __name__ == '__main__':
-    main()
+test_name = sys.argv[1] if len(sys.argv) > 1 else 'F-fnmsub.s-08.elf'
+elf_path = '/home/guy/Sagi/riscv_processor/riscv-arch-test/work/sagi_rv32imafd/elfs/rv32i/F/' + test_name
+try:
+    comp = subprocess.run(["vcs", "-sverilog", "-debug_access+all", "-kdb", "-lca", "-timescale=1ns/1ps", "-f", "filelist_arch_test.f", "-o", "simv_arch_test"], cwd="/home/guy/Sagi/riscv_processor/sim", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    if comp.returncode != 0:
+        with open("/home/guy/Sagi/riscv_processor/sim/sim_stdout.log", "w") as f:
+            f.write("COMPILE FAILED\n" + comp.stdout)
+        exit(1)
+    nm_out = subprocess.check_output(["riscv64-unknown-elf-nm", elf_path]).decode()
+    tohost_addr = [line.split()[0] for line in nm_out.splitlines() if " tohost" in line][0]
+    tohost_addr = f"{int(tohost_addr, 16) & 0xFFFFFFFF:x}"
+    subprocess.run(["riscv64-unknown-elf-objcopy", "-O", "binary", "--set-section-flags", ".bss=alloc,load,contents", elf_path, "sim/full.bin"], cwd="/home/guy/Sagi/riscv_processor", check=True)
+    with open("/home/guy/Sagi/riscv_processor/sim/full.bin", "rb") as f:
+        full_data = f.read().ljust(524288, b'\x00')
+    with open("/home/guy/Sagi/riscv_processor/sim/imem.hex", "w") as f:
+        for i in range(0, 524288, 4):
+            f.write(f"{struct.unpack('<I', full_data[i:i+4])[0]:08x}\n")
+    with open("/home/guy/Sagi/riscv_processor/sim/dmem.hex", "w") as f:
+        for i in range(524288):
+            f.write(f"{full_data[i]:02x}\n")
+    res = subprocess.run(["./simv_arch_test", f"+TOHOST_ADDR={tohost_addr}"], cwd="/home/guy/Sagi/riscv_processor/sim", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    with open("/home/guy/Sagi/riscv_processor/sim/sim_stdout.log", "w") as f:
+        f.write(res.stdout)
+except Exception as e:
+    with open("/home/guy/Sagi/riscv_processor/sim/sim_stdout.log", "w") as f:
+        f.write(str(e))
+    exit(1)

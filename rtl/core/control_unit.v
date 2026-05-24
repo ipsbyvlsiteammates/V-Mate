@@ -24,6 +24,7 @@ module control_unit #(
     input  wire [4:0] rs2_addr,
     input  wire [4:0] rd_addr,
     input  wire [1:0] mstatus_fs,
+    input  wire [2:0] fcsr_rm,
 
     // Outputs
     output reg        reg_write,
@@ -168,6 +169,11 @@ module control_unit #(
         fp_fflags_we    = 1'b0;
 
         case (opcode)
+            7'b0000000: begin
+                // Bubble / NOP (inserted by pipeline flushes)
+                // Keep all control signals at their default 0 values
+                exception = 1'b0;
+            end
             OP_R_TYPE: begin
                 reg_write    = 1'b1;
                 result_sel   = 2'b00;
@@ -198,8 +204,7 @@ module control_unit #(
 
             OP_LOAD: begin
                 reg_write    = 1'b1;
-                result_sel   = 2'b01;
-                mem_write    = 1'b0;
+                    mem_write    = 1'b0;
                 mem_read     = 1'b1;
                 alu_src      = 1'b1;
                 pc_src_auipc = 1'b0;
@@ -208,6 +213,7 @@ module control_unit #(
                 jump         = 1'b0;
                 alu_op_type  = 2'b00;
                 mem_size     = funct3;
+                result_sel = 2'b01;
             end
 
             OP_STORE: begin
@@ -296,25 +302,33 @@ module control_unit #(
 
             OP_AMO: begin
                 if (EXTENSION_A) begin
-                    amo_en = 1'b1;
-                    amo_op = funct7[6:2];
-                    mem_size = funct3;
-                    if (amo_op == 5'b00010) begin // LR
-                        mem_read   = 1'b1;
-                        mem_write  = 1'b0;
-                        reg_write  = 1'b1;
-                        result_sel = 2'b01;
-                    end else if (amo_op == 5'b00011) begin // SC
-                        mem_read   = 1'b0;
-                        mem_write  = 1'b1;
-                        reg_write  = 1'b1;
-                        result_sel = 2'b01;
-                    end else begin // Other AMOs
-                        mem_read   = 1'b1;
-                        mem_write  = 1'b1;
-                        reg_write  = 1'b1;
-                        result_sel = 2'b01;
+                    if (funct3 == 3'b010 || funct3 == 3'b011) begin
+                        amo_en = 1'b1;
+                        amo_op = funct7[6:2];
+                        mem_size = funct3;
+                        if (amo_op == 5'b00010) begin // LR
+                            mem_read   = 1'b1;
+                            mem_write  = 1'b0;
+                            reg_write  = 1'b1;
+                            result_sel = 2'b01;
+                        end else if (amo_op == 5'b00011) begin // SC
+                            mem_read   = 1'b0;
+                            mem_write  = 1'b1;
+                            reg_write  = 1'b1;
+                            result_sel = 2'b01;
+                        end else begin // Other AMOs
+                            mem_read   = 1'b1;
+                            mem_write  = 1'b1;
+                            reg_write  = 1'b1;
+                            result_sel = 2'b01;
+                        end
+                    end else begin
+                        exception = 1'b1;
+                        exception_cause = 4'd2;
                     end
+                end else begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
                 end
             end
 
@@ -336,6 +350,9 @@ module control_unit #(
                         end else if (funct7 == 7'b0011000 && rs2_addr == 5'b00010) begin
                             // MRET
                             mret_exec = 1'b1;
+                        end else begin
+                            exception = 1'b1;
+                            exception_cause = 4'd2;
                         end
                     end else begin
                         // Zicsr
@@ -363,33 +380,55 @@ module control_unit #(
                             default: begin
                                 csr_op = 2'b00;
                                 csr_write = 1'b0;
+                                exception = 1'b1;
+                                exception_cause = 4'd2;
                             end
                         endcase
                     end
+                end else begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
                 end
             end
 
             OP_LOAD_FP: begin
                 if (EXTENSION_F || EXTENSION_D) begin
-                    mem_read     = 1'b1;
-                    fp_we        = 1'b1;
-                    fp_mem_read  = 1'b1;
-                    alu_src      = 1'b1;
-                    imm_sel      = 3'b000; // IMM_I
-                    alu_op_type  = 2'b00;  // ADD
-                    mem_size     = funct3;
-                    fmt          = (funct3 == 3'b011) ? 2'b01 : 2'b00;
+                    if (funct3 == 3'b010 || funct3 == 3'b011) begin
+                        mem_read     = 1'b1;
+                        fp_we        = 1'b1;
+                        fp_mem_read  = 1'b1;
+                        alu_src      = 1'b1;
+                        imm_sel      = 3'b000; // IMM_I
+                        alu_op_type  = 2'b00;  // ADD
+                        mem_size     = funct3;
+                        fmt          = (funct3 == 3'b011) ? 2'b01 : 2'b00;
+                    end else begin
+                        exception = 1'b1;
+                        exception_cause = 4'd2;
+                    end
+                end else begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
                 end
+                result_sel = 2'b01;
             end
 
             OP_STORE_FP: begin
                 if (EXTENSION_F || EXTENSION_D) begin
-                    mem_write    = 1'b1;
-                    fp_mem_write = 1'b1;
-                    alu_src      = 1'b1;
-                    imm_sel      = 3'b001; // IMM_S
-                    alu_op_type  = 2'b00;  // ADD
-                    mem_size     = funct3;
+                    if (funct3 == 3'b010 || funct3 == 3'b011) begin
+                        mem_write    = 1'b1;
+                        fp_mem_write = 1'b1;
+                        alu_src      = 1'b1;
+                        imm_sel      = 3'b001; // IMM_S
+                        alu_op_type  = 2'b00;  // ADD
+                        mem_size     = funct3;
+                    end else begin
+                        exception = 1'b1;
+                        exception_cause = 4'd2;
+                    end
+                end else begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
                 end
             end
 
@@ -509,36 +548,36 @@ module control_unit #(
                             int_to_fp    = 1'b1;
                             fp_alu_op    = FP_ALU_FMV;
                         end
-                        default: ;
+                        default: begin
+                            exception = 1'b1;
+                            exception_cause = 4'd2;
+                        end
                     endcase
+                end else begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
                 end
             end
 
             default: begin
                 // Unknown opcode - safe defaults (all zeros)
+                exception = 1'b1;
+                exception_cause = 4'd2;
             end
         endcase
 
-        if (mstatus_fs == 2'b00) begin
-            if (opcode == OP_LOAD_FP || opcode == OP_STORE_FP || 
-                opcode == OP_FMADD || opcode == OP_FMSUB || 
-                opcode == OP_FNMSUB || opcode == OP_FNMADD || 
-                opcode == OP_FP) begin
-                reg_write       = 1'b0;
-                mem_write       = 1'b0;
-                mem_read        = 1'b0;
-                branch          = 1'b0;
-                jump            = 1'b0;
-                csr_write       = 1'b0;
-                mret_exec       = 1'b0;
-                amo_en          = 1'b0;
-                fp_we           = 1'b0;
-                fp_mem_read     = 1'b0;
-                fp_mem_write    = 1'b0;
-                fp_fflags_we    = 1'b0;
-                exception       = 1'b1;
+        if (opcode == OP_LOAD_FP || opcode == OP_STORE_FP || opcode == OP_FMADD || opcode == OP_FMSUB || opcode == OP_FNMSUB || opcode == OP_FNMADD || opcode == OP_FP) begin
+            if (mstatus_fs == 2'b00) begin
+                exception = 1'b1;
+                exception_cause = 4'd2;
+            end else if (opcode != OP_LOAD_FP && opcode != OP_STORE_FP && (funct3 == 3'b101 || funct3 == 3'b110)) begin
+                exception = 1'b1;
+                exception_cause = 4'd2;
+            end else if (opcode != OP_LOAD_FP && opcode != OP_STORE_FP && funct3 == 3'b111 && fcsr_rm >= 3'b101) begin
+                exception = 1'b1;
                 exception_cause = 4'd2;
             end
+            result_sel = 2'b01;
         end
     end
 

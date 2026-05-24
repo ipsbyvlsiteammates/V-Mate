@@ -19,6 +19,13 @@ module tb_uvm_top;
         rst_n = 0;
         #22 rst_n = 1;
     end
+    // Load memories
+    initial begin
+        foreach (dut.u_imem.mem[i]) dut.u_imem.mem[i] = 32'b0;
+        $readmemh("imem.hex", dut.u_imem.mem);
+        foreach (dut.u_dmem.mem[i]) dut.u_dmem.mem[i] = 8'b0;
+        $readmemh("dmem.hex", dut.u_dmem.mem);
+    end
 
     // DUT Instantiation
     riscv_top dut (
@@ -65,6 +72,20 @@ module tb_uvm_top;
         .fp_rd_data_wb(fp_wb_data_wb)
     );
 
+    bind riscv_top riscv_sva sva_inst (
+        .clk(clk),
+        .rst_n(rst_n),
+        .pc_out(pc_if),
+        .instruction(instruction_ex),
+        .exception_mem(exception_mem),
+        .amo_en_mem(amo_en_mem),
+        .reservation_valid(u_dmem.reservation_valid),
+        .mem_read_mem(mem_read_mem),
+        .mem_write_mem(mem_write_mem),
+        .fp_we_mem(fp_we_mem),
+        .reg_write_mem(reg_write_mem)
+    );
+
     initial begin
         // Pass the bound interface to UVM config DB
         uvm_config_db#(virtual riscv_if)::set(null, "*", "vif", dut.bound_if);
@@ -73,4 +94,50 @@ module tb_uvm_top;
     end
 
     
+
+    longint tohost_addr;
+    initial begin
+        if (!$value$plusargs("TOHOST_ADDR=%x", tohost_addr)) begin
+            $display("WARNING: +TOHOST_ADDR not provided. Using default.");
+            tohost_addr = 64'h80001000;
+        end
+    end
+
+    always @(posedge clk) begin
+        if (dut.bound_if.mem_write_mem && dut.bound_if.alu_result_mem == tohost_addr) begin
+            $display("TOHOST WRITE: %0h", dut.bound_if.write_data_mem);
+            if (dut.bound_if.write_data_mem == 1) begin
+                $display("TEST PASSED");
+            end else begin
+                $display("TEST FAILED with code %0d", dut.bound_if.write_data_mem);
+            end
+            $finish;
+        end
+    end
+
+    initial begin
+        #500000000; // 500ms timeout
+        $display("TEST TIMEOUT");
+        $finish;
+    end
+
+
+    integer inst_cnt = 0;
+    logic [31:0] last_pc = 32'hFFFFFFFF;
+    integer exc_cnt = 0;
+    always @(posedge clk) begin
+        if (rst_n && dut.bound_if.pc_ex != last_pc) begin
+            if (inst_cnt < 100) begin
+                $display("Time %0t: Executing PC=%08x, Inst=%08x", $time, dut.bound_if.pc_ex, dut.bound_if.instruction_ex);
+                inst_cnt = inst_cnt + 1;
+            end
+            last_pc <= dut.bound_if.pc_ex;
+        end
+        if (rst_n && dut.bound_if.exception_mem) begin
+            if (exc_cnt < 50) begin
+                $display("Time %0t: EXCEPTION at PC=%08x, cause=%0x", $time, dut.bound_if.pc_mem, dut.bound_if.exception_cause_mem);
+                exc_cnt = exc_cnt + 1;
+            end
+        end
+    end
 endmodule

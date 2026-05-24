@@ -1,4 +1,6 @@
-module pc (
+module pc #(
+    parameter RESET_VECTOR = 32'h80000000
+) (
     input wire clk,
     input wire rst_n,
     input wire stall,
@@ -12,7 +14,7 @@ module pc (
 );
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            pc_out <= 32'h00000000;
+            pc_out <= RESET_VECTOR;
         end else if (exception) begin
             pc_out <= mtvec;
         end else if (mret_exec) begin

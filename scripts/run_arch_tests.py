@@ -1,18 +1,22 @@
 import os
+os.environ['PATH'] = '/home/guy/Sagi/riscv_processor/dtc:' + os.environ.get('PATH', '')
+import os
 import subprocess
 import glob
 import struct
 import sys
 
 def main():
-    extensions = sys.argv[1] if len(sys.argv) > 1 else "I"
+    extensions = sys.argv[1:] if len(sys.argv) > 1 else ["I"]
     print(f"Running make to generate ELFs for extensions: {extensions}...")
     os.chdir("/home/guy/Sagi/riscv_processor/riscv-arch-test")
     subprocess.run(["make", "clean"], check=True)
-    subprocess.run(["make", "CONFIG_FILES=config/cores/sagi_rv32imafd/test_config.yaml", f"EXTENSIONS={extensions}", "JOBS=8"], check=True)
+    for ext in extensions:
+        subprocess.run(["make", f"CONFIG_FILES=config/cores/sagi_rv32imafd/test_config.yaml", f"EXTENSIONS={ext}", "JOBS=8"], check=True)
     os.chdir("/home/guy/Sagi/riscv_processor")
 
     elfs = glob.glob("/home/guy/Sagi/riscv_processor/riscv-arch-test/work/sagi_rv32imafd/elfs/**/*.elf", recursive=True)
+    elfs.sort()
     print(f"Found {len(elfs)} ELFs.")
 
     passed = 0
@@ -49,19 +53,24 @@ def main():
                 f.write(f"{word:08x}\n")
 
         with open("sim/dmem.hex", "w") as f:
+            f.write("@0\n")
             for i in range(524288):
                 f.write(f"{full_data[i]:02x}\n")
 
         os.chdir("/home/guy/Sagi/riscv_processor/sim")
         sim_cmd = ["./simv_arch_test", f"+TOHOST_ADDR={tohost_addr}"]
-        result = subprocess.run(sim_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        os.chdir("/home/guy/Sagi/riscv_processor")
-
-        if "TEST PASSED" in result.stdout:
-            print("  PASSED")
-            passed += 1
-        else:
-            print("  FAILED")
+        try:
+            result = subprocess.run(sim_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+            os.chdir("/home/guy/Sagi/riscv_processor")
+            if "TEST PASSED" in result.stdout:
+                print("  PASSED")
+                passed += 1
+            else:
+                print("  FAILED")
+                failed += 1
+        except subprocess.TimeoutExpired:
+            os.chdir("/home/guy/Sagi/riscv_processor")
+            print("  TIMEOUT")
             failed += 1
 
     print(f"Summary: {passed} passed, {failed} failed.")

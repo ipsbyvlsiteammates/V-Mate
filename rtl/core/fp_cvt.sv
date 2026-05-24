@@ -43,7 +43,7 @@ module fp_cvt (
             rp_sign = rs1_unpacked.sign;
             rp_exp  = rs1_unpacked.exp;
             rp_sig  = rs1_unpacked.sig;
-            rp_fmt  = rs2_addr[1:0];
+            rp_fmt  = fmt;
             rp_nv   = rs1_unpacked.is_snan;
             rp_dz   = 1'b0;
         end
@@ -186,10 +186,10 @@ module fp_cvt (
             out = {32'b0, final_int};
             fflags = f2i_fflags;
         end else if (!int_to_fp && rs1_unpacked.is_nan) begin
-            out = (fmt == 2'b00) ? 64'h7FF8000000000000 : 64'hFFFFFFFF_7FC00000;
+            out = (fmt == 2'b00) ? 64'hFFFFFFFF_7FC00000 : 64'h7FF8000000000000;
             fflags = {rs1_unpacked.is_snan, 4'b0000};
         end else if (!int_to_fp && rs1_unpacked.is_inf) begin
-            out = (fmt == 2'b00) ? {rs1_unpacked.sign, 11'h7FF, 52'b0} : {32'hFFFFFFFF, rs1_unpacked.sign, 8'hFF, 23'b0};
+            out = (fmt == 2'b00) ? {32'hFFFFFFFF, rs1_unpacked.sign, 8'hFF, 23'b0} : {rs1_unpacked.sign, 11'h7FF, 52'b0};
             fflags = 5'b00000;
         end else begin
             out = rp_out;

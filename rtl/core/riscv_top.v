@@ -9,7 +9,8 @@ module riscv_top #(
     parameter EXTENSION_M = 1,
     parameter EXTENSION_A = 1,
     parameter EXTENSION_F = 1,
-    parameter EXTENSION_D = 1
+    parameter EXTENSION_D = 1,
+    parameter RESET_VECTOR = 32'h80000000
 ) (
     input  wire        clk,
     input  wire        clk_en,
@@ -221,6 +222,7 @@ module riscv_top #(
     // Forwarding muxes in EX stage
     wire [31:0] forward_data_mem = fp_to_int_mem ? fp_alu_result_mem[31:0] :
                                   (result_sel_mem == 2'b00) ? alu_result_mem :
+                                  (result_sel_mem == 2'b01) ? dmem_rdata_mem[31:0] :
                                   (result_sel_mem == 2'b10) ? pc_plus4_mem :
                                   (result_sel_mem == 2'b11) ? csr_rdata_mem :
                                   alu_result_mem;
@@ -239,6 +241,7 @@ module riscv_top #(
     //========================================================================
     // WB Stage Logic (from prompt)
     //========================================================================
+    wire is_single_precision_wb = (instruction_wb[6:0] == 7'b1010011 && instruction_wb[31:25] == 7'b0100000) ? (instruction_wb[24:20] == 5'b00000) : (fmt_wb == 2'b00);
     assign wb_data_wb = fp_to_int_wb ? fp_alu_result_wb[31:0] :
                        (result_sel_wb == 2'b00) ? alu_result_wb :
                        (result_sel_wb == 2'b01) ? dmem_rdata_wb[31:0] :
@@ -246,7 +249,8 @@ module riscv_top #(
                        (result_sel_wb == 2'b11) ? csr_rdata_wb :
                                                  32'b0;
     assign load_fp_data_wb = (mem_size_wb == 3'b010) ? {32'hFFFFFFFF, dmem_rdata_wb[31:0]} : dmem_rdata_wb;
-    assign fp_wb_data_wb = fp_mem_read_wb ? load_fp_data_wb[FLEN-1:0] : fp_alu_result_wb;
+    wire [FLEN-1:0] nan_boxed_fp_alu_result = (FLEN == 64 && is_single_precision_wb) ? (fp_alu_result_wb | 64'hFFFFFFFF00000000) : fp_alu_result_wb;
+    assign fp_wb_data_wb = fp_mem_read_wb ? load_fp_data_wb[FLEN-1:0] : nan_boxed_fp_alu_result;
 
     //========================================================================
     // MEM Stage Logic (from prompt)
@@ -257,7 +261,9 @@ module riscv_top #(
     //========================================================================
     // IF Stage Instantiations
     //========================================================================
-    pc u_pc (
+    pc #(
+        .RESET_VECTOR(RESET_VECTOR)
+    ) u_pc (
         .clk       (global_gated_clk),
         .rst_n     (rst_n),
         .stall     (stall_pc),
@@ -326,6 +332,7 @@ module riscv_top #(
         .rs2_addr        (instruction_id[24:20]),
         .rd_addr         (instruction_id[11:7]),
         .mstatus_fs      (mstatus_fs_mem),
+        .fcsr_rm         (fcsr_rm_mem),
         .reg_write       (reg_write_id),
         .result_sel      (result_sel_id),
         .mem_write       (mem_write_id),
@@ -692,6 +699,11 @@ module riscv_top #(
         .pc_sel_ex      (pc_sel_ex),
         .exception_mem  (exception_mem),
         .mret_exec_mem  (mret_exec_mem),
+        .csr_write_ex   (csr_write_ex),
+        .csr_write_mem  (csr_write_mem),
+        .csr_op_id      (csr_op_id),
+        .fp_fflags_we_ex(fp_fflags_we_ex),
+        .fp_fflags_we_mem(fp_fflags_we_mem),
         .stall_pc       (stall_pc),
         .stall_if_id    (stall_if_id),
         .flush_if_id    (flush_if_id),
