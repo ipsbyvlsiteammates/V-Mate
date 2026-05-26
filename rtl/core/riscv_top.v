@@ -29,6 +29,8 @@ module riscv_top #(
     //========================================================================
     // Hazard Unit Wires
     //========================================================================
+    wire stall_pc_hz;
+    wire stall_if_id_hz;
     wire stall_pc;
     wire stall_if_id;
     wire flush_if_id;
@@ -198,6 +200,113 @@ module riscv_top #(
     wire [FLEN-1:0] fp_wb_data_wb;
 
     //========================================================================
+    // OoO Interconnect Wires & Instantiations
+    //========================================================================
+    wire ooo_en;
+    wire [3:0] rob_idx_disp, rs1_rob_idx, rs2_rob_idx, rs3_rob_idx;
+    wire rob_full, iq_full, rs1_in_rob, rs2_in_rob, rs3_in_rob;
+    wire commit_en, commit_dest_type, commit_exception, commit_is_store, commit_is_branch, commit_branch_mispredicted;
+    wire [4:0] commit_dest_reg;
+    wire [63:0] commit_result;
+    wire [31:0] commit_pc, commit_branch_target, commit_instruction;
+    wire [3:0] commit_exception_cause;
+
+
+    wire final_exception;
+    wire [3:0] final_exception_cause;
+    wire [31:0] final_exception_pc;
+    wire [31:0] final_exception_addr;
+    wire final_pc_sel;
+    wire [31:0] final_pc_target;
+    wire final_flush;
+    wire final_mret_exec;
+
+    wire [3:0] commit_rob_idx;
+    wire [3:0] rob_head;
+    wire [3:0] rob_idx_disp;
+
+    wire issue_en;
+    wire [3:0] issue_rob_idx;
+    wire [9:0] issue_op_type;
+    wire [4:0] issue_alu_op;
+    wire [31:0] issue_pc, issue_imm;
+    wire [63:0] issue_rs1_data, issue_rs2_data, issue_rs3_data;
+
+    wire cdb_en;
+    wire [3:0] cdb_rob_idx;
+    wire [63:0] cdb_data;
+
+    
+    wire valid_inst_id_no_stall = (instruction_id != 32'b0) && !flush_id_ex;
+    wire is_load_id = (instruction_id[6:0] == 7'b0000011);
+    wire is_store_id = (instruction_id[6:0] == 7'b0100011);
+    wire is_fp_load_id = (instruction_id[6:0] == 7'b0000111);
+    wire is_fp_store_id = (instruction_id[6:0] == 7'b0100111);
+    wire is_amo_id = (instruction_id[6:0] == 7'b0101111);
+    wire is_system_id = (instruction_id[6:0] == 7'b1110011);
+    wire is_fence_id = (instruction_id[6:0] == 7'b0001111);
+    wire is_serialization_req = is_load_id | is_store_id | is_fp_load_id | is_fp_store_id | is_amo_id | is_system_id | is_fence_id | exception_id;
+    
+    wire rob_empty = (rob_head == rob_idx_disp) && !rob_full;
+    wire stall_dispatch = ooo_en & ( (is_serialization_req & !rob_empty) | rob_full | iq_full ) & valid_inst_id_no_stall;
+    
+    assign stall_pc = stall_pc_hz | stall_dispatch;
+    assign stall_if_id = stall_if_id_hz | stall_dispatch;
+
+    wire valid_inst_id = valid_inst_id_no_stall && !stall_if_id;
+    wire dispatch_en = ooo_en & valid_inst_id;
+
+    
+
+    // OoO Branch Evaluation
+    wire ooo_branch_mispredicted = 1'b0;
+    wire [31:0] ooo_branch_target = 32'b0;
+
+    reg exception_wb;
+    reg [3:0] exception_cause_wb;
+
+    wire cdb_exception;
+    wire [3:0] cdb_exception_cause;
+    wire cdb_pc_sel;
+    wire [31:0] cdb_pc_target;
+    reg pc_sel_mem, pc_sel_wb;
+    reg [31:0] pc_target_mem, pc_target_wb;
+    wire [31:0] commit_instruction;
+        wire [31:0] cdb_instruction;
+    rob #(.ROB_DEPTH(16), .ROB_IDX_W(4)) u_rob (
+        .clk(global_gated_clk), .rst_n(rst_n), .ooo_en(ooo_en),
+        .dispatch_en(dispatch_en), .dest_reg(instruction_id[11:7]), .dest_type(fp_we_id), .pc(pc_id), .is_store(mem_write_id | is_fp_store_id), .is_branch(branch_id | jump_id), .instruction(instruction_id), .dispatch_exception(exception_id), .dispatch_exception_cause(exception_cause_id), .rob_idx(rob_idx_disp), .rob_full(rob_full), .rob_head(rob_head),
+        .complete_en(cdb_en), .complete_idx(cdb_rob_idx), .complete_instruction(cdb_instruction), .result(cdb_data), .exception(cdb_exception), .exception_cause(cdb_exception_cause), .branch_mispredicted(cdb_pc_sel), .branch_target(cdb_pc_target),
+        .commit_en(commit_en), .commit_dest_reg(commit_dest_reg), .commit_dest_type(commit_dest_type), .commit_result(commit_result), .commit_pc(commit_pc), .commit_exception(commit_exception), .commit_exception_cause(commit_exception_cause), .commit_is_store(commit_is_store), .commit_is_branch(commit_is_branch), .commit_instruction(commit_instruction), .commit_branch_mispredicted(commit_branch_mispredicted), .commit_branch_target(commit_branch_target), .commit_rob_idx(commit_rob_idx), .commit_ack(commit_en), .flush(final_flush)
+    );
+
+    rat u_rat (
+        .clk(global_gated_clk), .rst_n(rst_n), .ooo_en(ooo_en),
+        .rs1(instruction_id[19:15]), .rs2(instruction_id[24:20]), .rs3(instruction_id[31:27]), .rs1_type(1'b0), .rs2_type(1'b0), .rs3_type(1'b1),
+        .rs1_rob_idx(rs1_rob_idx), .rs1_in_rob(rs1_in_rob), .rs2_rob_idx(rs2_rob_idx), .rs2_in_rob(rs2_in_rob), .rs3_rob_idx(rs3_rob_idx), .rs3_in_rob(rs3_in_rob),
+        .dispatch_en(dispatch_en), .dest_reg(instruction_id[11:7]), .dest_type(fp_we_id), .rob_idx(rob_idx_disp),
+        .commit_en(commit_en), .commit_dest_reg(commit_dest_reg), .commit_dest_type(commit_dest_type), .commit_rob_idx(commit_rob_idx),
+        .flush(final_flush)
+    );
+
+    iq #(.IQ_DEPTH(8)) u_iq (
+        .clk(global_gated_clk), .rst_n(rst_n), .ooo_en(ooo_en), .flush(final_flush),
+        .dispatch_en(dispatch_en), .rob_idx(rob_idx_disp), .op_type({instruction_id[31:25], instruction_id[14:12]}), .alu_op(alu_op_id), .pc(pc_id), .imm(imm_out_id),
+        .rs1_wait(1'b0), .rs1_rob_idx(rs1_rob_idx), .rs1_data({32'b0, rs1_data_id}),
+        .rs2_wait(1'b0), .rs2_rob_idx(rs2_rob_idx), .rs2_data({32'b0, rs2_data_id}),
+        .rs3_wait(1'b0), .rs3_rob_idx(rs3_rob_idx), .rs3_data( FLEN == 64 ? fp_rs3_data_id : {32'b0, fp_rs3_data_id[31:0]} ),
+        .iq_full(iq_full), .rob_head(rob_head),
+        .cdb_en(cdb_en), .cdb_rob_idx(cdb_rob_idx), .cdb_data(cdb_data),
+        .issue_en(issue_en), .issue_rob_idx(issue_rob_idx), .issue_op_type(issue_op_type), .issue_alu_op(issue_alu_op), .issue_pc(issue_pc), .issue_imm(issue_imm), .issue_rs1_data(issue_rs1_data), .issue_rs2_data(issue_rs2_data), .issue_rs3_data(issue_rs3_data), .issue_ack(issue_en)
+    );
+    reg rob_reg_write_array [0:15];
+    always @(posedge global_gated_clk) begin
+        if (dispatch_en) begin
+            rob_reg_write_array[rob_idx_disp] <= reg_write_id | fp_we_id;
+        end
+    end
+    wire commit_reg_write = rob_reg_write_array[commit_rob_idx];
+    //========================================================================
     // EX Stage Logic (from prompt)
     //========================================================================
     reg branch_taken_r;
@@ -228,11 +337,17 @@ module riscv_top #(
                                   alu_result_mem;
 
     // Forwarding muxes in EX stage
-    wire [31:0] forwarded_rs1_data_ex = (forward_a == 2'b10) ? forward_data_mem : (forward_a == 2'b01) ? wb_data_wb : rs1_data_ex;
-    wire [31:0] forwarded_rs2_data_ex = (forward_b == 2'b10) ? forward_data_mem : (forward_b == 2'b01) ? wb_data_wb : rs2_data_ex;
-    wire [FLEN-1:0] forwarded_fp_rs1_data_ex = (forward_fp_a == 2'b10) ? fp_alu_result_mem : (forward_fp_a == 2'b01) ? fp_wb_data_wb : fp_rs1_data_ex;
-    wire [FLEN-1:0] forwarded_fp_rs2_data_ex = (forward_fp_b == 2'b10) ? fp_alu_result_mem : (forward_fp_b == 2'b01) ? fp_wb_data_wb : fp_rs2_data_ex;
-    wire [FLEN-1:0] forwarded_fp_rs3_data_ex = (forward_fp_c == 2'b10) ? fp_alu_result_mem : (forward_fp_c == 2'b01) ? fp_wb_data_wb : fp_rs3_data_ex;
+    wire commit_fwd_match_rs1 = ooo_en && commit_en && commit_reg_write && !commit_dest_type && (commit_dest_reg == instruction_ex[19:15]) && (commit_dest_reg != 5'b0);
+    wire commit_fwd_match_rs2 = ooo_en && commit_en && commit_reg_write && !commit_dest_type && (commit_dest_reg == instruction_ex[24:20]) && (commit_dest_reg != 5'b0);
+    wire commit_fwd_match_fp_rs1 = ooo_en && commit_en && commit_reg_write && commit_dest_type && (commit_dest_reg == instruction_ex[19:15]);
+    wire commit_fwd_match_fp_rs2 = ooo_en && commit_en && commit_reg_write && commit_dest_type && (commit_dest_reg == instruction_ex[24:20]);
+    wire commit_fwd_match_fp_rs3 = ooo_en && commit_en && commit_reg_write && commit_dest_type && (commit_dest_reg == instruction_ex[31:27]);
+
+    wire [31:0] forwarded_rs1_data_ex = (forward_a == 2'b10) ? forward_data_mem : (forward_a == 2'b01) ? wb_data_wb : commit_fwd_match_rs1 ? commit_result[31:0] : rs1_data_ex;
+    wire [31:0] forwarded_rs2_data_ex = (forward_b == 2'b10) ? forward_data_mem : (forward_b == 2'b01) ? wb_data_wb : commit_fwd_match_rs2 ? commit_result[31:0] : rs2_data_ex;
+    wire [FLEN-1:0] forwarded_fp_rs1_data_ex = (forward_fp_a == 2'b10) ? fp_alu_result_mem : (forward_fp_a == 2'b01) ? fp_wb_data_wb : commit_fwd_match_fp_rs1 ? commit_result[FLEN-1:0] : fp_rs1_data_ex;
+    wire [FLEN-1:0] forwarded_fp_rs2_data_ex = (forward_fp_b == 2'b10) ? fp_alu_result_mem : (forward_fp_b == 2'b01) ? fp_wb_data_wb : commit_fwd_match_fp_rs2 ? commit_result[FLEN-1:0] : fp_rs2_data_ex;
+    wire [FLEN-1:0] forwarded_fp_rs3_data_ex = (forward_fp_c == 2'b10) ? fp_alu_result_mem : (forward_fp_c == 2'b01) ? fp_wb_data_wb : commit_fwd_match_fp_rs3 ? commit_result[FLEN-1:0] : fp_rs3_data_ex;
 
     wire [31:0] alu_operand_a_ex = pc_src_auipc_ex ? pc_ex : forwarded_rs1_data_ex;
     wire [31:0] alu_operand_b_ex = alu_src_ex ? imm_out_ex : forwarded_rs2_data_ex;
@@ -241,7 +356,10 @@ module riscv_top #(
     //========================================================================
     // WB Stage Logic (from prompt)
     //========================================================================
-    wire is_single_precision_wb = (instruction_wb[6:0] == 7'b1010011 && instruction_wb[31:25] == 7'b0100000) ? (instruction_wb[24:20] == 5'b00000) : (fmt_wb == 2'b00);
+        wire [31:0] complete_instruction;
+    wire [31:0] final_instruction_wb = ooo_en ? cdb_instruction : instruction_wb;
+    wire [1:0] final_fmt_wb = ooo_en ? cdb_instruction[26:25] : fmt_wb;
+    wire is_single_precision_wb = (final_instruction_wb[6:0] == 7'b1010011 && final_instruction_wb[31:25] == 7'b0100000) ? (final_instruction_wb[24:20] == 5'b00000) : (final_fmt_wb == 2'b00);
     assign wb_data_wb = fp_to_int_wb ? fp_alu_result_wb[31:0] :
                        (result_sel_wb == 2'b00) ? alu_result_wb :
                        (result_sel_wb == 2'b01) ? dmem_rdata_wb[31:0] :
@@ -261,17 +379,20 @@ module riscv_top #(
     //========================================================================
     // IF Stage Instantiations
     //========================================================================
+    
+    wire [31:0] final_pc_target = pc_target_ex;
+
     pc #(
         .RESET_VECTOR(RESET_VECTOR)
     ) u_pc (
         .clk       (global_gated_clk),
         .rst_n     (rst_n),
         .stall     (stall_pc),
-        .pc_sel    (pc_sel_ex),
-        .pc_target (pc_target_ex),
+        .pc_sel    (final_pc_sel),
+        .pc_target (final_pc_target),
         .exception (exception_mem),
         .mtvec     (mtvec_out_mem),
-        .mret_exec (mret_exec_mem),
+        .mret_exec (final_mret_exec),
         .mepc      (mepc_out_mem),
         .pc_out    (pc_if)
     );
@@ -288,7 +409,7 @@ module riscv_top #(
         .clk            (global_gated_clk),
         .rst_n          (rst_n),
         .stall          (stall_if_id),
-        .flush          (flush_if_id),
+        .flush(flush_if_id | final_flush),
         .pc_if          (pc_if),
         .instruction_if (instruction_if),
         .pc_plus4_if    (pc_plus4_if),
@@ -300,14 +421,19 @@ module riscv_top #(
     //========================================================================
     // ID Stage Instantiations
     //========================================================================
+
+    wire final_reg_write = ooo_en ? (commit_en & commit_reg_write & ~commit_dest_type & ~commit_exception) : reg_write_wb;
+    wire [4:0] final_rd_addr = ooo_en ? commit_dest_reg : instruction_wb[11:7];
+    wire [31:0] final_rd_data = ooo_en ? commit_result[31:0] : wb_data_wb;
+
     register_file u_register_file (
         .clk        (global_gated_clk),
         .rst_n      (rst_n),
         .rs1_addr   (instruction_id[19:15]),
         .rs2_addr   (instruction_id[24:20]),
-        .rd_addr    (instruction_wb[11:7]),
-        .rd_data    (wb_data_wb),
-        .we         (reg_write_wb),
+        .rd_addr    (final_rd_addr),
+        .rd_data    (final_rd_data),
+        .we         (final_reg_write),
         .rs1_data   (rs1_data_id),
         .rs2_data   (rs2_data_id)
     );
@@ -365,19 +491,23 @@ module riscv_top #(
 
     generate
         if (EXTENSION_F || EXTENSION_D) begin : gen_fpr
+            wire final_fp_we = ooo_en ? (commit_en & commit_reg_write & commit_dest_type & ~commit_exception) : fp_we_wb;
+            wire [4:0] final_fp_rd_addr = ooo_en ? commit_dest_reg : instruction_wb[11:7];
+            wire [FLEN-1:0] final_fp_write_data = ooo_en ? commit_result[FLEN-1:0] : fp_wb_data_wb;
+
             fpr #(
                 .EXTENSION_F(EXTENSION_F),
                 .EXTENSION_D(EXTENSION_D)
             ) u_fpr (
                 .clk        (global_gated_clk),
                 .rst_n      (rst_n),
-                .we         (fp_we_wb),
-                .rd_addr    (instruction_wb[11:7]),
+                .we         (final_fp_we),
+                .rd_addr    (final_fp_rd_addr),
                 .rs1_addr   (instruction_id[19:15]),
                 .rs2_addr   (instruction_id[24:20]),
                 .rs3_addr   (instruction_id[31:27]),
                 .fmt        (fmt_id),
-                .write_data (fp_wb_data_wb),
+                .write_data (final_fp_write_data),
                 .rs1_data   (fp_rs1_data_id),
                 .rs2_data   (fp_rs2_data_id),
                 .rs3_data   (fp_rs3_data_id)
@@ -398,7 +528,7 @@ module riscv_top #(
         .clk                (global_gated_clk),
         .rst_n              (rst_n),
         .stall              (1'b0),
-        .flush              (flush_id_ex),
+        .flush(flush_id_ex | final_flush | stall_dispatch),
         .pc_id              (pc_id),
         .pc_plus4_id        (pc_plus4_id),
         .instruction_id     (instruction_id),
@@ -435,7 +565,7 @@ module riscv_top #(
         .reg_write_id       (reg_write_id),
         .result_sel_id      (result_sel_id),
         .fp_we_id           (fp_we_id),
-        
+
         .pc_ex              (pc_ex),
         .pc_plus4_ex        (pc_plus4_ex),
         .instruction_ex     (instruction_ex),
@@ -477,15 +607,141 @@ module riscv_top #(
     //========================================================================
     // EX Stage Instantiations
     //========================================================================
+    wire [31:0] final_alu_operand_a = alu_operand_a_ex;
+    wire [31:0] final_alu_operand_b = alu_operand_b_ex;
+    wire [4:0]  final_alu_op        = alu_op_ex;
+
     alu #(
         .EXTENSION_M(EXTENSION_M)
     ) u_alu (
-        .operand_a  (alu_operand_a_ex),
-        .operand_b  (alu_operand_b_ex),
-        .alu_op     (alu_op_ex),
+        .operand_a  (final_alu_operand_a),
+        .operand_b  (final_alu_operand_b),
+        .alu_op     (final_alu_op),
         .alu_result (alu_result_ex),
         .zero_flag  (zero_flag_ex)
     );
+
+// CDB Broadcast
+    reg [3:0] rob_idx_ex, rob_idx_mem, rob_idx_wb;
+    reg valid_ex, valid_mem, valid_wb;
+    
+    reg cdb_done_mem, cdb_done_wb;
+
+    wire ex_ready = !(mem_read_ex || mem_write_ex || fp_mem_read_ex || fp_mem_write_ex || csr_write_ex || result_sel_ex == 2'b11 || amo_en_ex);
+    wire ex_wants_cdb = valid_ex && (ex_ready || exception_ex);
+    wire mem_ready = !(mem_read_mem || fp_mem_read_mem || csr_write_mem || result_sel_mem == 2'b11 || amo_en_mem);
+    wire mem_wants_cdb = valid_mem && ((!cdb_done_mem && mem_ready) || exception_mem);
+    wire wb_wants_cdb = valid_wb && (!cdb_done_wb || exception_wb);
+
+    wire grant_wb  = wb_wants_cdb;
+    wire grant_mem = mem_wants_cdb && !grant_wb;
+    wire grant_ex  = ex_wants_cdb && !grant_wb && !grant_mem;
+
+    always @(posedge global_gated_clk or negedge rst_n) begin
+        if (!rst_n) begin
+            valid_ex <= 0;
+            valid_mem <= 0;
+            valid_wb <= 0;
+            exception_wb <= 0;
+            exception_cause_wb <= 0;
+            pc_sel_mem <= 0;
+            pc_sel_wb <= 0;
+            pc_target_mem <= 0;
+            pc_target_wb <= 0;
+            rob_idx_ex <= 0;
+            rob_idx_mem <= 0;
+            rob_idx_wb <= 0;
+            cdb_done_mem <= 0;
+            cdb_done_wb <= 0;
+        end else begin
+            if (flush_id_ex | final_flush) begin
+                valid_ex <= 0;
+            end else begin
+                valid_ex <= dispatch_en;
+                rob_idx_ex <= rob_idx_disp;
+            end
+
+            if (flush_ex_mem | final_flush) begin
+                valid_mem <= 0;
+                cdb_done_mem <= 0;
+                pc_sel_mem <= 0;
+                pc_target_mem <= 0;
+            end else begin
+                valid_mem <= valid_ex;
+                rob_idx_mem <= rob_idx_ex;
+                cdb_done_mem <= grant_ex;
+                pc_sel_mem <= pc_sel_ex;
+                pc_target_mem <= pc_target_ex;
+            end
+
+            if (flush_mem_wb | final_flush) begin
+                valid_wb <= 0;
+                cdb_done_wb <= 0;
+                exception_wb <= 0;
+                exception_cause_wb <= 0;
+                pc_sel_wb <= 0;
+                pc_target_wb <= 0;
+            end else begin
+                valid_wb <= valid_mem;
+                rob_idx_wb <= rob_idx_mem;
+                cdb_done_wb <= cdb_done_mem | grant_mem;
+                exception_wb <= exception_mem;
+                exception_cause_wb <= exception_cause_mem;
+                pc_sel_wb <= pc_sel_mem;
+                pc_target_wb <= pc_target_mem;
+            end
+        end
+    end
+
+    // EX Stage CDB Data
+    wire [31:0] ex_int_data = (result_sel_ex == 2'b10) ? pc_plus4_ex : alu_result_ex;
+    wire [63:0] ex_fp_data = (FLEN == 64) ? fp_alu_result_ex : {32'b0, fp_alu_result_ex[31:0]};
+    wire [63:0] ex_cdb_data = fp_we_ex ? ex_fp_data : {32'b0, ex_int_data};
+
+    // MEM Stage CDB Data
+    wire [31:0] mem_int_data = fp_to_int_mem ? fp_alu_result_mem[31:0] :
+                               (result_sel_mem == 2'b00) ? alu_result_mem :
+                               (result_sel_mem == 2'b01) ? dmem_rdata_mem[31:0] :
+                               (result_sel_mem == 2'b10) ? pc_plus4_mem :
+                               (result_sel_mem == 2'b11) ? csr_rdata_mem :
+                               alu_result_mem;
+    
+    wire [31:0] final_instruction_mem = ooo_en ? complete_instruction : instruction_mem;
+    wire [1:0] final_fmt_mem = ooo_en ? complete_instruction[26:25] : fmt_mem;
+    wire is_single_precision_mem = (final_instruction_mem[6:0] == 7'b1010011 && final_instruction_mem[31:25] == 7'b0100000) ? (final_instruction_mem[24:20] == 5'b00000) : (final_fmt_mem == 2'b00);
+    wire [63:0] load_fp_data_mem = (mem_size_mem == 3'b010) ? {32'hFFFFFFFF, dmem_rdata_mem[31:0]} : dmem_rdata_mem;
+    wire [FLEN-1:0] nan_boxed_fp_alu_result_mem = (FLEN == 64 && is_single_precision_mem) ? (fp_alu_result_mem | 64'hFFFFFFFF00000000) : fp_alu_result_mem;
+    wire [FLEN-1:0] mem_fp_data_raw = fp_mem_read_mem ? load_fp_data_mem[FLEN-1:0] : nan_boxed_fp_alu_result_mem;
+    wire [63:0] mem_fp_data = (FLEN == 64) ? mem_fp_data_raw : {32'b0, mem_fp_data_raw[31:0]};
+    
+    wire [63:0] mem_cdb_data = fp_we_mem ? mem_fp_data : {32'b0, mem_int_data};
+
+    // WB Stage CDB Data
+    wire [63:0] cdb_data_fp;
+    generate
+        if (FLEN == 64) begin : gen_cdb_fp64
+            assign cdb_data_fp = fp_wb_data_wb;
+
+    assign cdb_exception = grant_wb ? exception_wb : (grant_mem ? exception_mem : (grant_ex ? exception_ex : 1'b0));
+    assign cdb_exception_cause = grant_wb ? exception_cause_wb : (grant_mem ? exception_cause_mem : (grant_ex ? exception_cause_ex : 4'b0));
+    assign cdb_pc_sel = grant_wb ? pc_sel_wb : (grant_mem ? pc_sel_mem : (grant_ex ? pc_sel_ex : 1'b0));
+    assign cdb_pc_target = grant_wb ? pc_target_wb : (grant_mem ? pc_target_mem : (grant_ex ? pc_target_ex : 32'b0));
+
+        end else begin : gen_cdb_fp32
+            assign cdb_data_fp = {32'b0, fp_wb_data_wb};
+        end
+    endgenerate
+    wire [63:0] wb_cdb_data = fp_we_wb ? cdb_data_fp : {32'b0, wb_data_wb};
+
+    assign cdb_en = ooo_en & (grant_wb | grant_mem | grant_ex);
+    
+    assign cdb_rob_idx = grant_wb  ? rob_idx_wb :
+                         grant_mem ? rob_idx_mem :
+                                     rob_idx_ex;
+
+    assign cdb_data = grant_wb  ? wb_cdb_data :
+                      grant_mem ? mem_cdb_data :
+                                  ex_cdb_data;
 
     generate
         if (EXTENSION_F || EXTENSION_D) begin : gen_fp_alu
@@ -538,7 +794,7 @@ module riscv_top #(
         .clk                 (global_gated_clk),
         .rst_n               (rst_n),
         .stall               (1'b0),
-        .flush               (flush_ex_mem),
+        .flush(flush_ex_mem | final_flush),
         .pc_ex               (pc_ex),
         .pc_plus4_ex         (pc_plus4_ex),
         .instruction_ex      (instruction_ex),
@@ -566,7 +822,7 @@ module riscv_top #(
         .fp_we_ex            (fp_we_ex),
         .fp_to_int_ex        (fp_to_int_ex),
         .fmt_ex              (fmt_ex),
-        
+
         .pc_mem              (pc_mem),
         .pc_plus4_mem        (pc_plus4_mem),
         .instruction_mem     (instruction_mem),
@@ -625,18 +881,19 @@ module riscv_top #(
                 .csr_wdata       (csr_wdata_mem),
                 .csr_op          (csr_op_mem),
                 .csr_write       (csr_write_mem),
-                .exception       (exception_mem),
-                .exception_cause (exception_cause_mem),
-                .exception_pc    (pc_mem),
-                .exception_addr  (instruction_mem),
-                .mret_exec       (mret_exec_mem),
+                .exception       (final_exception),
+                .exception_cause (final_exception_cause),
+                .exception_pc    (final_exception_pc),
+                .exception_addr  (final_exception_addr),
+                .mret_exec       (final_mret_exec),
                 .fp_fflags_update(fp_fflags_mem),
                 .fp_fflags_we    (fp_fflags_we_mem),
                 .csr_rdata       (csr_rdata_mem),
                 .mepc_out        (mepc_out_mem),
                 .mtvec_out       (mtvec_out_mem),
                 .fcsr_rm         (fcsr_rm_mem),
-                .mstatus_fs_out  (mstatus_fs_mem)
+                .mstatus_fs_out  (mstatus_fs_mem),
+                .ooo_en          (ooo_en)
             );
         end else begin : gen_no_csr
             assign csr_rdata_mem = 32'b0;
@@ -656,7 +913,7 @@ module riscv_top #(
         .clk               (global_gated_clk),
         .rst_n             (rst_n),
         .stall             (1'b0),
-        .flush             (flush_mem_wb),
+        .flush(flush_mem_wb | final_flush),
         .pc_plus4_mem      (pc_plus4_mem),
         .instruction_mem   (instruction_mem),
         .alu_result_mem    (alu_result_mem),
@@ -670,7 +927,7 @@ module riscv_top #(
         .fp_mem_read_mem   (fp_mem_read_mem),
         .mem_size_mem      (mem_size_mem),
         .fmt_mem           (fmt_mem),
-        
+
         .pc_plus4_wb       (pc_plus4_wb),
         .instruction_wb    (instruction_wb),
         .alu_result_wb     (alu_result_wb),
@@ -689,6 +946,19 @@ module riscv_top #(
     //========================================================================
     // Hazard Unit
     //========================================================================
+    
+    assign final_exception = ooo_en ? commit_exception : exception_mem;
+    assign final_exception_cause = ooo_en ? commit_exception_cause : exception_cause_mem;
+    assign final_exception_pc = ooo_en ? commit_pc : pc_mem;
+    assign final_exception_addr = ooo_en ? commit_instruction : instruction_mem;
+    
+    assign final_pc_sel = ooo_en ? (commit_en & commit_branch_mispredicted) : pc_sel_ex;
+    assign final_pc_target = ooo_en ? commit_branch_target : pc_target_ex;
+    
+    wire commit_is_mret = (commit_instruction == 32'h30200073);
+    assign final_mret_exec = ooo_en ? (commit_en & commit_is_mret) : mret_exec_mem;
+    assign final_flush = final_exception | (ooo_en & commit_en & commit_branch_mispredicted) | final_mret_exec;
+
     hazard_unit u_hazard_unit (
         .rs1_addr_id    (instruction_id[19:15]),
         .rs2_addr_id    (instruction_id[24:20]),
@@ -696,16 +966,16 @@ module riscv_top #(
         .rd_addr_ex     (instruction_ex[11:7]),
         .mem_read_ex    (mem_read_ex),
         .fp_mem_read_ex (fp_mem_read_ex),
-        .pc_sel_ex      (pc_sel_ex),
-        .exception_mem  (exception_mem),
-        .mret_exec_mem  (mret_exec_mem),
+        .pc_sel_ex      (final_pc_sel),
+        .exception_mem  (final_exception),
+        .mret_exec_mem  (final_mret_exec),
         .csr_write_ex   (csr_write_ex),
         .csr_write_mem  (csr_write_mem),
         .csr_op_id      (csr_op_id),
         .fp_fflags_we_ex(fp_fflags_we_ex),
         .fp_fflags_we_mem(fp_fflags_we_mem),
-        .stall_pc       (stall_pc),
-        .stall_if_id    (stall_if_id),
+        .stall_pc       (stall_pc_hz),
+        .stall_if_id    (stall_if_id_hz),
         .flush_if_id    (flush_if_id),
         .flush_id_ex    (flush_id_ex),
         .flush_ex_mem   (flush_ex_mem),

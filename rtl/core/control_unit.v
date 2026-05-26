@@ -175,31 +175,44 @@ module control_unit #(
                 exception = 1'b0;
             end
             OP_R_TYPE: begin
-                reg_write    = 1'b1;
-                result_sel   = 2'b00;
-                mem_write    = 1'b0;
-                mem_read     = 1'b0;
-                alu_src      = 1'b0;
-                pc_src_auipc = 1'b0;
-                imm_sel      = 3'b000;
-                branch       = 1'b0;
-                jump         = 1'b0;
-                alu_op_type  = 2'b10;
-                mem_size     = 3'b000;
+                if ((EXTENSION_M && funct7 == 7'b0000001) || 
+                    (funct7 == 7'b0000000) || 
+                    (funct7 == 7'b0100000 && (funct3 == 3'b000 || funct3 == 3'b101))) begin
+                    reg_write    = 1'b1;
+                    result_sel   = 2'b00;
+                    mem_write    = 1'b0;
+                    mem_read     = 1'b0;
+                    alu_src      = 1'b0;
+                    pc_src_auipc = 1'b0;
+                    imm_sel      = 3'b000;
+                    branch       = 1'b0;
+                    jump         = 1'b0;
+                    alu_op_type  = 2'b10;
+                    mem_size     = 3'b000;
+                end else begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
+                end
             end
 
             OP_I_TYPE: begin
-                reg_write    = 1'b1;
-                result_sel   = 2'b00;
-                mem_write    = 1'b0;
-                mem_read     = 1'b0;
-                alu_src      = 1'b1;
-                pc_src_auipc = 1'b0;
-                imm_sel      = 3'b000;
-                branch       = 1'b0;
-                jump         = 1'b0;
-                alu_op_type  = 2'b11;
-                mem_size     = 3'b000;
+                if ((funct3 == 3'b001 && funct7 != 7'b0000000) ||
+                    (funct3 == 3'b101 && funct7 != 7'b0000000 && funct7 != 7'b0100000)) begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
+                end else begin
+                    reg_write    = 1'b1;
+                    result_sel   = 2'b00;
+                    mem_write    = 1'b0;
+                    mem_read     = 1'b0;
+                    alu_src      = 1'b1;
+                    pc_src_auipc = 1'b0;
+                    imm_sel      = 3'b000;
+                    branch       = 1'b0;
+                    jump         = 1'b0;
+                    alu_op_type  = 2'b11;
+                    mem_size     = 3'b000;
+                end
             end
 
             OP_LOAD: begin
@@ -231,17 +244,22 @@ module control_unit #(
             end
 
             OP_BRANCH: begin
-                reg_write    = 1'b0;
-                result_sel   = 2'b00;
-                mem_write    = 1'b0;
-                mem_read     = 1'b0;
-                alu_src      = 1'b0;
-                pc_src_auipc = 1'b0;
-                imm_sel      = 3'b010;
-                branch       = 1'b1;
-                jump         = 1'b0;
-                alu_op_type  = 2'b01;
-                mem_size     = 3'b000;
+                if (funct3 == 3'b010 || funct3 == 3'b011) begin
+                    exception = 1'b1;
+                    exception_cause = 4'd2;
+                end else begin
+                    reg_write    = 1'b0;
+                    result_sel   = 2'b00;
+                    mem_write    = 1'b0;
+                    mem_read     = 1'b0;
+                    alu_src      = 1'b0;
+                    pc_src_auipc = 1'b0;
+                    imm_sel      = 3'b010;
+                    branch       = 1'b1;
+                    jump         = 1'b0;
+                    alu_op_type  = 2'b01;
+                    mem_size     = 3'b000;
+                end
             end
 
             OP_JAL: begin

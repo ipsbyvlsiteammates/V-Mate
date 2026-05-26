@@ -1,0 +1,12 @@
+
+VLOGAN	= vlogan
+VLOGAN_OPT	= -sverilog +incdir+../tb/uvm -full64
+
+all :		_VCSgd_TvNmcd_1.db \
+
+
+
+_VCSgd_TvNmcd_1.db :	../rtl/core/riscv_top.v 
+		${VLOGAN}  ${VLOGAN_OPT} ../rtl/core/riscv_top.v
+
+

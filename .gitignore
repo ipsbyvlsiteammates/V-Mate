@@ -1,0 +1,12 @@
+sim/csrc/
+sim/simv.daidir/
+sim/simv
+sim/*.log
+sim/*.hex
+sim/*.bin
+sim/ucli.key
+sim/vc_hdrs.h
+sim/FP_TRACE
+sim/urgReport/
+__pycache__/
+riscv-arch-test/work/

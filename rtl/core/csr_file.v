@@ -19,7 +19,8 @@ module csr_file #(
     output reg  [31:0] csr_rdata,
     output wire [31:0] mepc_out,
     output wire [31:0] mtvec_out,
-    output wire [2:0]  fcsr_rm
+    output wire [2:0]  fcsr_rm,
+    output wire        ooo_en
 );
 
     localparam logic [11:0] CSR_MSTATUS  = 12'h300;
@@ -32,6 +33,7 @@ module csr_file #(
     localparam logic [11:0] CSR_MTVAL    = 12'h343;
     localparam logic [11:0] CSR_MIP      = 12'h344;
     localparam logic [11:0] CSR_MHARTID  = 12'hF14;
+    localparam logic [11:0] CSR_MOOOCTRL = 12'h7C0;
 
     localparam logic [11:0] CSR_FFLAGS   = 12'h001;
     localparam logic [11:0] CSR_FRM      = 12'h002;
@@ -55,6 +57,7 @@ module csr_file #(
 
     reg [2:0]  frm_reg;
     reg [4:0]  fflags_reg;
+    reg        moooctrl_ooo_en;
 
     wire [31:0] mstatus_val = {17'b0, mstatus_fs, 2'b11, 3'b0, mstatus_mpie, 3'b0, mstatus_mie, 3'b0};
     assign mstatus_fs_out = mstatus_fs;
@@ -63,6 +66,7 @@ module csr_file #(
 
     assign mepc_out  = mepc_reg;
     assign mtvec_out = mtvec_reg;
+    assign ooo_en    = moooctrl_ooo_en;
     wire [31:0] next_csr_wdata;
     assign next_csr_wdata = (csr_op == CSR_OP_RW) ? csr_wdata :
                             (csr_op == CSR_OP_RS) ? (csr_rdata | csr_wdata) :
@@ -82,6 +86,7 @@ module csr_file #(
             CSR_MTVAL:    csr_rdata = mtval_reg;
             CSR_MIP:      csr_rdata = mip_reg;
             CSR_MHARTID:  csr_rdata = mhartid_val;
+            CSR_MOOOCTRL: csr_rdata = {31'b0, moooctrl_ooo_en};
             CSR_FFLAGS:   csr_rdata = {27'b0, fflags_reg};
             CSR_FRM:      csr_rdata = {29'b0, frm_reg};
             CSR_FCSR:     csr_rdata = {24'b0, frm_reg, fflags_reg};
@@ -112,6 +117,7 @@ module csr_file #(
             mip_reg      <= 32'b0;
             frm_reg      <= 3'b0;
             fflags_reg   <= 5'b0;
+            moooctrl_ooo_en <= 1'b0;
         end else begin
             if (exception) begin
                 mepc_reg     <= exception_pc;
@@ -141,6 +147,7 @@ module csr_file #(
                         frm_reg    <= next_csr_wdata[7:5];
                         fflags_reg <= next_csr_wdata[4:0];
                     end
+                    CSR_MOOOCTRL: moooctrl_ooo_en <= next_csr_wdata[0];
                     default: ;
                 endcase
             end else if (fp_fflags_we) begin

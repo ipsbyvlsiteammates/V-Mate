@@ -10,6 +10,7 @@ module tb_uvm_top;
 
     // Clock generation
     initial begin
+    force dut.ooo_en = 1'b1;
         clk = 0;
         forever #5 clk = ~clk;
     end
@@ -38,11 +39,15 @@ module tb_uvm_top;
     bind riscv_top riscv_if bound_if (
         .clk(clk),
         .rst_n(rst_n),
-        .pc_ex(pc_ex),
+        .valid_ex(valid_ex),
+    .rob_idx_ex(rob_idx_ex),
+    .pc_ex(pc_ex),
         .instruction_ex(instruction_ex),
         .fp_rs1_data_ex(fp_rs1_data_ex),
         .fp_rs3_data_ex(fp_rs3_data_ex),
-        .pc_mem(pc_mem),
+        .valid_mem(valid_mem),
+    .rob_idx_mem(rob_idx_mem),
+    .pc_mem(pc_mem),
         .instruction_mem(instruction_mem),
         .reg_write_mem(reg_write_mem),
         .rd_addr_mem(instruction_mem[11:7]),
@@ -69,7 +74,27 @@ module tb_uvm_top;
         .reservation_valid(u_dmem.reservation_valid),
         .reservation_addr(u_dmem.reservation_addr),
         .rd_data_wb(wb_data_wb),
-        .fp_rd_data_wb(fp_wb_data_wb)
+
+        .fp_rd_data_wb(fp_wb_data_wb),
+        
+        // OoO Signals
+        .ooo_en(ooo_en),
+        .dispatch_en(dispatch_en),
+        .dispatch_pc(pc_id),
+        .dispatch_instruction(instruction_id),
+        .dispatch_rob_idx(rob_idx_disp),
+        .commit_en(commit_en),
+        .commit_pc(commit_pc),
+        .commit_result(commit_result),
+        .commit_dest_reg(commit_dest_reg),
+        .commit_dest_type(commit_dest_type),
+        .commit_exception(commit_exception),
+        .commit_exception_cause(commit_exception_cause),
+        .commit_rob_idx(commit_rob_idx),
+        .commit_is_store(commit_is_store),
+        .commit_instruction(commit_instruction),
+        .commit_reg_write(commit_reg_write)
+
     );
 
     bind riscv_top riscv_sva sva_inst (
@@ -140,4 +165,10 @@ module tb_uvm_top;
             end
         end
     end
+
+  initial begin
+    wait(rst_n === 1'b1);
+    #10;
+    force dut.gen_csr.u_csr_file.moooctrl_ooo_en = 1'b1;
+  end
 endmodule

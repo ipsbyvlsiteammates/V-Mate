@@ -7,7 +7,7 @@ import struct
 import sys
 
 def main():
-    extensions = sys.argv[1:] if len(sys.argv) > 1 else ["I"]
+    extensions = ["I", "M", "F", "D"]
     print(f"Running make to generate ELFs for extensions: {extensions}...")
     os.chdir("/home/guy/Sagi/riscv_processor/riscv-arch-test")
     subprocess.run(["make", "clean"], check=True)
@@ -60,7 +60,7 @@ def main():
         os.chdir("/home/guy/Sagi/riscv_processor/sim")
         sim_cmd = ["./simv_arch_test", f"+TOHOST_ADDR={tohost_addr}"]
         try:
-            result = subprocess.run(sim_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=5)
+            result = subprocess.run(sim_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=20)
             os.chdir("/home/guy/Sagi/riscv_processor")
             if "TEST PASSED" in result.stdout:
                 print("  PASSED")

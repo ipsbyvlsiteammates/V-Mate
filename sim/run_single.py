@@ -18,16 +18,21 @@ subprocess.check_call(['riscv64-unknown-elf-objcopy', '-O', 'binary', elf, f'{si
 
 with open(f'{sim_dir}/full.bin', 'rb') as f:
     data = f.read()
-data = data.ljust(524288, b'\x00')
+
+data = data.ljust(524288, b'\x00')[:524288]
+imem_data = data[:262144]
+dmem_data = data[262144:]
 
 with open(f'{sim_dir}/imem.hex', 'w') as f:
-    for i in range(0, len(data), 4):
-        word = data[i:i+4].ljust(4, b'\x00')
+    for i in range(0, len(imem_data), 4):
+        word = imem_data[i:i+4]
         f.write(f"{word[3]:02x}{word[2]:02x}{word[1]:02x}{word[0]:02x}\n")
 
 with open(f'{sim_dir}/dmem.hex', 'w') as f:
-    for i in range(len(data)):
-        f.write(f"{data[i]:02x}\n")
+    f.write("@40000\n")
+    for b in dmem_data:
+        f.write(f"{b:02x}\n")
+
 os.chdir(sim_dir)
 subprocess.check_call(['vcs', '-sverilog', '-debug_access+all', '-kdb', '-lca', '-timescale=1ns/1ps', '-f', 'filelist_arch_test.f', '-o', 'simv_arch_test'])
-subprocess.run(['./simv_arch_test', f'+TOHOST_ADDR={tohost_hex}'])
+subprocess.run(['./simv_arch_test', f'+TOHOST_ADDR={tohost_hex}'], timeout=10)

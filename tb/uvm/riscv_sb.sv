@@ -197,7 +197,7 @@ class riscv_sb extends uvm_scoreboard;
       exp_mem_read = 1'b0;
       exp_mem_write = 1'b0;
       exp_fp_we = 1'b0;
-    end
+    end else begin
 
     case (opcode)
       7'b0110111: begin // LUI
@@ -576,6 +576,7 @@ class riscv_sb extends uvm_scoreboard;
         end
       end
     endcase
+    end
 
     if (txn.reg_write !== exp_reg_write)
       `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | reg_write mismatch. Exp: %0b, Act: %0b", txn.pc, txn.instruction, exp_reg_write, txn.reg_write))

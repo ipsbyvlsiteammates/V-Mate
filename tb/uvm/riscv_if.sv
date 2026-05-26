@@ -5,13 +5,35 @@ interface riscv_if(
     input logic clk,
     input logic rst_n,
     
+
+    // OoO Signals
+    input logic ooo_en,
+    input logic dispatch_en,
+    input logic [31:0] dispatch_pc,
+    input logic [31:0] dispatch_instruction,
+    input logic [3:0] dispatch_rob_idx,
+    input logic commit_en,
+    input logic [31:0] commit_pc,
+    input logic [63:0] commit_result,
+    input logic [4:0] commit_dest_reg,
+    input logic commit_dest_type,
+    input logic commit_exception,
+    input logic [3:0] commit_exception_cause,
+    input logic [3:0] commit_rob_idx,
+    input logic commit_is_store,
+    input logic [31:0] commit_instruction,
+    input logic commit_reg_write,
     // EX Stage
+    input logic valid_ex,
+    input logic [3:0] rob_idx_ex,
     input logic [31:0] pc_ex,
     input logic [31:0] instruction_ex,
     input logic [63:0] fp_rs1_data_ex,
     input logic [63:0] fp_rs3_data_ex,
     
     // MEM Stage
+    input logic valid_mem,
+    input logic [3:0] rob_idx_mem,
     input logic [31:0] pc_mem,
     input logic [31:0] instruction_mem,
     input logic reg_write_mem,
@@ -47,10 +69,31 @@ interface riscv_if(
     clocking mon_cb @(posedge clk);
         default input #1step output #1ns;
         input rst_n;
+        input ooo_en;
+        input dispatch_en;
+        input dispatch_pc;
+        input dispatch_instruction;
+        input dispatch_rob_idx;
+        input commit_en;
+        input commit_pc;
+        input commit_result;
+        input commit_dest_reg;
+        input commit_dest_type;
+        input commit_exception;
+        input commit_exception_cause;
+        input commit_rob_idx;
+        input commit_is_store;
+        input commit_instruction;
+        input commit_reg_write;
+
+        input valid_ex;
+        input rob_idx_ex;
         input pc_ex;
         input instruction_ex;
         input fp_rs1_data_ex;
         input fp_rs3_data_ex;
+        input valid_mem;
+        input rob_idx_mem;
         input pc_mem;
         input instruction_mem;
         input reg_write_mem;

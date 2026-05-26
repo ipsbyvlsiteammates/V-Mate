@@ -5,6 +5,7 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 
 class riscv_mon extends uvm_monitor;
+  riscv_txn pending_txns[int];
   `uvm_component_utils(riscv_mon)
 
   virtual riscv_if vif;
@@ -26,67 +27,133 @@ class riscv_mon extends uvm_monitor;
     end
   endfunction
 
-  virtual task run_phase(uvm_phase phase);
+    virtual task run_phase(uvm_phase phase);
     riscv_txn txn;
     forever begin
       @(vif.mon_cb);
       if (vif.mon_cb.rst_n === 1'b1) begin
-        // 1. WB stage: complete the transaction from the previous cycle
-        if (mem_queue.size() > 0) begin
-          riscv_txn retiring_txn = mem_queue.pop_front();
-          if (retiring_txn.instruction !== 32'h00000000) begin
-            retiring_txn.rd_data = vif.mon_cb.rd_data_wb;
-            retiring_txn.fp_rd_data = vif.mon_cb.fp_rd_data_wb;
-            ap.write(retiring_txn);
+        if (vif.mon_cb.ooo_en === 1'b1) begin
+          // OoO Mode
+          // 1. Dispatch
+          if (vif.mon_cb.dispatch_en && vif.mon_cb.dispatch_instruction !== 32'h00000000) begin
+            txn = riscv_txn::type_id::create("txn");
+            txn.pc = vif.mon_cb.dispatch_pc;
+            txn.instruction = vif.mon_cb.dispatch_instruction;
+            pending_txns[vif.mon_cb.dispatch_rob_idx] = txn;
           end
-        end
-
-        // 2. MEM stage: create new transaction
-        if (vif.mon_cb.instruction_mem !== 32'h00000000) begin
-          txn = riscv_txn::type_id::create("txn");
-          txn.pc = vif.mon_cb.pc_mem;
-          txn.instruction = vif.mon_cb.instruction_mem;
-          txn.reg_write = vif.mon_cb.reg_write_mem;
-          txn.rd_addr = vif.mon_cb.rd_addr_mem;
-          txn.mem_write = vif.mon_cb.mem_write_mem;
-          txn.mem_read = vif.mon_cb.mem_read_mem;
-          txn.alu_result = vif.mon_cb.alu_result_mem;
-          txn.write_data = vif.mon_cb.write_data_mem;
-          txn.csr_addr = vif.mon_cb.csr_addr_mem;
-          txn.csr_wdata = vif.mon_cb.csr_wdata_mem;
-          txn.csr_rdata = vif.mon_cb.csr_rdata_mem;
-          txn.csr_op = vif.mon_cb.csr_op_mem;
-          txn.csr_write = vif.mon_cb.csr_write_mem;
-          txn.exception = vif.mon_cb.exception_mem;
-          txn.exception_cause = vif.mon_cb.exception_cause_mem;
-          txn.mret_exec = vif.mon_cb.mret_exec_mem;
-          txn.fp_we = vif.mon_cb.fp_we_mem;
-          txn.fp_rd_addr = vif.mon_cb.fp_rd_addr_mem;
-          txn.fp_rs1_data = fp_rs1_data_mem; // from previous cycle's EX stage
-          txn.fp_rs2_data = vif.mon_cb.fp_rs2_data_mem;
-          txn.fp_rs3_data = fp_rs3_data_mem; // from previous cycle's EX stage
-          txn.fcsr_rm = vif.mon_cb.fcsr_rm_mem;
-          txn.fflags_update = vif.mon_cb.fflags_update_mem;
-          txn.fp_alu_result = vif.mon_cb.fp_alu_result_mem;
-          txn.amo_en = vif.mon_cb.amo_en_mem;
-          txn.amo_op = vif.mon_cb.amo_op_mem;
-          txn.reservation_valid = vif.mon_cb.reservation_valid;
-          txn.reservation_addr = vif.mon_cb.reservation_addr;
           
-          mem_queue.push_back(txn);
+          
+          // Snoop EX stage
+          if (vif.mon_cb.valid_ex) begin
+            if (pending_txns.exists(vif.mon_cb.rob_idx_ex)) begin
+              pending_txns[vif.mon_cb.rob_idx_ex].fp_rs1_data = vif.mon_cb.fp_rs1_data_ex;
+              pending_txns[vif.mon_cb.rob_idx_ex].fp_rs3_data = vif.mon_cb.fp_rs3_data_ex;
+            end
+          end
+
+          // Snoop MEM stage to capture alu_result, write_data, and CSR info
+          if (vif.mon_cb.valid_mem) begin
+            if (pending_txns.exists(vif.mon_cb.rob_idx_mem)) begin
+              pending_txns[vif.mon_cb.rob_idx_mem].mem_read = vif.mon_cb.mem_read_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].mem_write = vif.mon_cb.mem_write_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].alu_result = vif.mon_cb.alu_result_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].write_data = vif.mon_cb.write_data_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].csr_addr = vif.mon_cb.csr_addr_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].csr_wdata = vif.mon_cb.csr_wdata_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].csr_rdata = vif.mon_cb.csr_rdata_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].csr_op = vif.mon_cb.csr_op_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].csr_write = vif.mon_cb.csr_write_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].mret_exec = vif.mon_cb.mret_exec_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].fp_rs2_data = vif.mon_cb.fp_rs2_data_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].fcsr_rm = vif.mon_cb.fcsr_rm_mem;
+              pending_txns[vif.mon_cb.rob_idx_mem].fflags_update = vif.mon_cb.fflags_update_mem;
+            end
+          end
+
+          // 2. Commit
+          if (vif.mon_cb.commit_en) begin
+            if (pending_txns.exists(vif.mon_cb.commit_rob_idx)) begin
+              txn = pending_txns[vif.mon_cb.commit_rob_idx];
+              txn.instruction = vif.mon_cb.commit_instruction;
+              
+              if (vif.mon_cb.commit_dest_type == 1'b0) begin
+                txn.reg_write = vif.mon_cb.commit_reg_write & ~vif.mon_cb.commit_exception;
+                txn.rd_addr = vif.mon_cb.commit_dest_reg;
+                txn.rd_data = vif.mon_cb.commit_result[31:0];
+                txn.fp_we = 1'b0;
+              end else begin
+                txn.fp_we = 1'b1;
+                txn.fp_rd_addr = vif.mon_cb.commit_dest_reg;
+                txn.fp_rd_data = vif.mon_cb.commit_result;
+                txn.reg_write = 1'b0;
+              end
+              
+              txn.exception = vif.mon_cb.commit_exception;
+              txn.exception_cause = vif.mon_cb.commit_exception_cause;
+              txn.mem_write = vif.mon_cb.commit_is_store;
+              
+              ap.write(txn);
+              pending_txns.delete(vif.mon_cb.commit_rob_idx);
+            end
+          end
         end else begin
-          // Push a dummy to keep pipeline in sync
-          txn = riscv_txn::type_id::create("txn_dummy");
-          txn.instruction = 32'h00000000;
-          mem_queue.push_back(txn);
+          // In-Order Mode (existing logic)
+          // 1. WB stage: complete the transaction from the previous cycle
+          if (mem_queue.size() > 0) begin
+            riscv_txn retiring_txn = mem_queue.pop_front();
+            if (retiring_txn.instruction !== 32'h00000000) begin
+              retiring_txn.rd_data = vif.mon_cb.rd_data_wb;
+              retiring_txn.fp_rd_data = vif.mon_cb.fp_rd_data_wb;
+              ap.write(retiring_txn);
+            end
+          end
+
+          // 2. MEM stage: create new transaction
+          if (vif.mon_cb.instruction_mem !== 32'h00000000) begin
+            txn = riscv_txn::type_id::create("txn");
+            txn.pc = vif.mon_cb.pc_mem;
+            txn.instruction = vif.mon_cb.instruction_mem;
+            txn.reg_write = vif.mon_cb.reg_write_mem;
+            txn.rd_addr = vif.mon_cb.rd_addr_mem;
+            txn.mem_write = vif.mon_cb.mem_write_mem;
+            txn.mem_read = vif.mon_cb.mem_read_mem;
+            txn.alu_result = vif.mon_cb.alu_result_mem;
+            txn.write_data = vif.mon_cb.write_data_mem;
+            txn.csr_addr = vif.mon_cb.csr_addr_mem;
+            txn.csr_wdata = vif.mon_cb.csr_wdata_mem;
+            txn.csr_rdata = vif.mon_cb.csr_rdata_mem;
+            txn.csr_op = vif.mon_cb.csr_op_mem;
+            txn.csr_write = vif.mon_cb.csr_write_mem;
+            txn.exception = vif.mon_cb.exception_mem;
+            txn.exception_cause = vif.mon_cb.exception_cause_mem;
+            txn.mret_exec = vif.mon_cb.mret_exec_mem;
+            txn.fp_we = vif.mon_cb.fp_we_mem;
+            txn.fp_rd_addr = vif.mon_cb.fp_rd_addr_mem;
+            txn.fp_rs1_data = fp_rs1_data_mem;
+            txn.fp_rs2_data = vif.mon_cb.fp_rs2_data_mem;
+            txn.fp_rs3_data = fp_rs3_data_mem;
+            txn.fcsr_rm = vif.mon_cb.fcsr_rm_mem;
+            txn.fflags_update = vif.mon_cb.fflags_update_mem;
+            txn.fp_alu_result = vif.mon_cb.fp_alu_result_mem;
+            txn.amo_en = vif.mon_cb.amo_en_mem;
+            txn.amo_op = vif.mon_cb.amo_op_mem;
+            txn.reservation_valid = vif.mon_cb.reservation_valid;
+            txn.reservation_addr = vif.mon_cb.reservation_addr;
+            
+            mem_queue.push_back(txn);
+          end else begin
+            txn = riscv_txn::type_id::create("txn_dummy");
+            txn.instruction = 32'h00000000;
+            mem_queue.push_back(txn);
+          end
+
+          // 3. Shift EX signals to MEM for next cycle
+          fp_rs1_data_mem = vif.mon_cb.fp_rs1_data_ex;
+          fp_rs3_data_mem = vif.mon_cb.fp_rs3_data_ex;
         end
-
-        // 3. Shift EX signals to MEM for next cycle
-        fp_rs1_data_mem = vif.mon_cb.fp_rs1_data_ex;
-        fp_rs3_data_mem = vif.mon_cb.fp_rs3_data_ex;
-
       end else begin
         mem_queue.delete();
+        pending_txns.delete();
         fp_rs1_data_mem = 64'h0;
         fp_rs3_data_mem = 64'h0;
       end

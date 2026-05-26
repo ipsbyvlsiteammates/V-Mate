@@ -31,3 +31,7 @@
 
 ../tb/uvm/riscv_cov.sv
 ../tb/uvm/riscv_sva.sv
+
+../rtl/core/rob.sv
+../rtl/core/rat.sv
+../rtl/core/iq.sv

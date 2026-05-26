@@ -43,11 +43,7 @@ module fpr #(
                 fpr_array[i] <= {FLEN{1'b0}};
             end
         end else if (we) begin
-            if (EXTENSION_D && fmt == 2'b00) begin
-                fpr_array[rd_addr] <= {32'hFFFFFFFF, write_data[31:0]};
-            end else begin
-                fpr_array[rd_addr] <= write_data;
-            end
+            fpr_array[rd_addr] <= write_data;
         end
     end
 

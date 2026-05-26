@@ -25,3 +25,7 @@
 ../rtl/core/pipe_mem_wb.v
 ../rtl/core/forwarding_unit.v
 ../rtl/core/hazard_unit.v
+
+../rtl/core/rob.sv
+../rtl/core/rat.sv
+../rtl/core/iq.sv
