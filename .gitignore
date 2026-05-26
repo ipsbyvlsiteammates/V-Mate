@@ -10,3 +10,4 @@ sim/FP_TRACE
 sim/urgReport/
 __pycache__/
 riscv-arch-test/work/
+riscv-dv/
