@@ -1,0 +1,55 @@
+diff --git a/tb/uvm/riscv_mon.sv b/tb/uvm/riscv_mon.sv
+index f7d3bf4..d69701b 100644
+--- a/tb/uvm/riscv_mon.sv
++++ b/tb/uvm/riscv_mon.sv
+@@ -39,6 +39,34 @@ class riscv_mon extends uvm_monitor;
+             txn = riscv_txn::type_id::create("txn");
+             txn.pc = vif.mon_cb.dispatch_pc;
+             txn.instruction = vif.mon_cb.dispatch_instruction;
++            txn.mem_read = 1'b0;
++            txn.mem_write = 1'b0;
++            txn.reg_write = 1'b0;
++            txn.fp_we = 1'b0;
++            txn.exception = 1'b0;
++            txn.mret_exec = 1'b0;
++            txn.amo_en = 1'b0;
++            txn.reservation_valid = 1'b0;
++            txn.csr_write = 1'b0;
++            txn.fflags_update = 5'h0;
++            txn.alu_result = 32'h0;
++            txn.write_data = 32'h0;
++            txn.csr_addr = 12'h0;
++            txn.csr_wdata = 32'h0;
++            txn.csr_rdata = 32'h0;
++            txn.csr_op = 3'h0;
++            txn.exception_cause = 4'h0;
++            txn.fp_rs1_data = 64'h0;
++            txn.fp_rs2_data = 64'h0;
++            txn.fp_rs3_data = 64'h0;
++            txn.fcsr_rm = 3'h0;
++            txn.fp_alu_result = 64'h0;
++            txn.amo_op = 5'h0;
++            txn.reservation_addr = 32'h0;
++            txn.rd_addr = 5'h0;
++            txn.fp_rd_addr = 5'h0;
++            txn.rd_data = 32'h0;
++            txn.fp_rd_data = 64'h0;
+             pending_txns[vif.mon_cb.dispatch_rob_idx] = txn;
+           end
+           
+@@ -74,7 +102,7 @@ class riscv_mon extends uvm_monitor;
+           if (vif.mon_cb.commit_en) begin
+             if (pending_txns.exists(vif.mon_cb.commit_rob_idx)) begin
+               txn = pending_txns[vif.mon_cb.commit_rob_idx];
+-              txn.instruction = vif.mon_cb.commit_instruction;
++              // txn.instruction = vif.mon_cb.commit_instruction;
+               
+               if (vif.mon_cb.commit_dest_type == 1'b0) begin
+                 txn.reg_write = vif.mon_cb.commit_reg_write & ~vif.mon_cb.commit_exception;
+@@ -161,4 +189,4 @@ class riscv_mon extends uvm_monitor;
+   endtask
+ endclass
+ 
+-`endif
++`endif
+\ No newline at end of file

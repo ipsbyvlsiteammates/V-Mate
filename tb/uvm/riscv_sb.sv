@@ -181,6 +181,29 @@ class riscv_sb extends uvm_scoreboard;
         default: is_illegal = 1'b1;
       endcase
     end
+    if (opcode == 7'b0110011) begin // OP_R_TYPE
+      if (funct7 != 7'b0000000 && funct7 != 7'b0100000 && funct7 != 7'b0000001) is_illegal = 1'b1;
+      if (funct7 == 7'b0100000 && funct3 != 3'b000 && funct3 != 3'b101) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b0010011) begin // OP_I_TYPE
+      if (funct3 == 3'b001 && funct7 != 7'b0000000) is_illegal = 1'b1;
+      if (funct3 == 3'b101 && funct7 != 7'b0000000 && funct7 != 7'b0100000) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b1100011) begin // OP_BRANCH
+      if (funct3 == 3'b010 || funct3 == 3'b011) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b0000011) begin // OP_LOAD
+      if (funct3 == 3'b011 || funct3 == 3'b110 || funct3 == 3'b111) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b0100011) begin // OP_STORE
+      if (funct3 == 3'b011 || funct3 == 3'b100 || funct3 == 3'b101 || funct3 == 3'b110 || funct3 == 3'b111) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b1110011) begin // OP_SYSTEM
+      if (funct3 == 3'b100) is_illegal = 1'b1;
+    end
+    if (opcode == 7'b1100111) begin // OP_JALR
+      if (funct3 != 3'b000) is_illegal = 1'b1;
+    end
     
     if (is_illegal) begin
       if (txn.exception !== 1'b1)
@@ -197,7 +220,7 @@ class riscv_sb extends uvm_scoreboard;
       exp_mem_read = 1'b0;
       exp_mem_write = 1'b0;
       exp_fp_we = 1'b0;
-    end else begin
+    end
 
     case (opcode)
       7'b0110111: begin // LUI
@@ -481,7 +504,7 @@ class riscv_sb extends uvm_scoreboard;
         
                 if (opcode != 7'b1010011 || (funct7[6:2] != 5'b11100 && funct7[6:2] != 5'b11110)) begin
           if (exp_fp_we || exp_reg_write) begin
-            if (txn.fflags_update !== exp_fflags) begin
+            if (vif.ooo_en === 1'b0 && txn.fflags_update !== exp_fflags) begin
               `uvm_error("SB_MISMATCH", $sformatf("PC: %0h | fflags mismatch. Exp: %0h, Act: %0h", txn.pc, exp_fflags, txn.fflags_update))
             end
           end
@@ -512,7 +535,7 @@ class riscv_sb extends uvm_scoreboard;
             shadow_csr[CSR_MSTATUS] = {shadow_csr[CSR_MSTATUS][31:8], shadow_csr[CSR_MSTATUS][3], shadow_csr[CSR_MSTATUS][6:0]}; // MPIE = MIE
             shadow_csr[CSR_MSTATUS] = {shadow_csr[CSR_MSTATUS][31:4], 1'b0, shadow_csr[CSR_MSTATUS][2:0]}; // MIE = 0
           end else if (txn.instruction[31:20] == 12'h302) begin // MRET
-            if (txn.mret_exec !== 1'b1)
+            if (vif.ooo_en === 1'b0 && txn.mret_exec !== 1'b1)
               `uvm_error("SB_MISMATCH", $sformatf("PC: %0h | MRET did not assert mret_exec", txn.pc))
             shadow_csr[CSR_MSTATUS] = {shadow_csr[CSR_MSTATUS][31:4], shadow_csr[CSR_MSTATUS][7], shadow_csr[CSR_MSTATUS][2:0]}; // MIE = MPIE
           end
@@ -533,7 +556,7 @@ class riscv_sb extends uvm_scoreboard;
             csr_rdata_exp = shadow_csr[csr];
           end
           
-          if (txn.csr_rdata !== csr_rdata_exp)
+          if (vif.ooo_en === 1'b0 && txn.csr_rdata !== csr_rdata_exp)
             `uvm_error("SB_MISMATCH", $sformatf("PC: %0h | CSR %0h rdata mismatch. Exp: %0h, Act: %0h", txn.pc, csr, csr_rdata_exp, txn.csr_rdata))
           
           exp_reg_write = 1'b1;
@@ -549,7 +572,7 @@ class riscv_sb extends uvm_scoreboard;
           endcase
           
           if (txn.csr_write) begin
-            if (txn.csr_wdata !== wdata_src)
+            if (vif.ooo_en === 1'b0 && txn.csr_wdata !== wdata_src)
               `uvm_error("SB_MISMATCH", $sformatf("PC: %0h | CSR %0h wdata mismatch. Exp: %0h, Act: %0h", txn.pc, csr, wdata_src, txn.csr_wdata))
             
             if (csr != CSR_MISA && csr != CSR_MHARTID) begin
@@ -576,11 +599,10 @@ class riscv_sb extends uvm_scoreboard;
         end
       end
     endcase
-    end
 
     if (txn.reg_write !== exp_reg_write)
       `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | reg_write mismatch. Exp: %0b, Act: %0b", txn.pc, txn.instruction, exp_reg_write, txn.reg_write))
-    if (txn.mem_read !== exp_mem_read)
+    if (vif.ooo_en === 1'b0 && txn.mem_read !== exp_mem_read)
       `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | mem_read mismatch. Exp: %0b, Act: %0b", txn.pc, txn.instruction, exp_mem_read, txn.mem_read))
     if (txn.mem_write !== exp_mem_write && !(opcode == 7'b0101111 && funct7[6:2] == 5'b00011))
       `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | mem_write mismatch. Exp: %0b, Act: %0b", txn.pc, txn.instruction, exp_mem_write, txn.mem_write))
@@ -589,13 +611,13 @@ class riscv_sb extends uvm_scoreboard;
     
     if (opcode != 7'b0001111 && opcode != 7'b1100011 && opcode != 7'b1101111 && opcode != 7'b1100111 && opcode != 7'b1110011 && opcode != 7'b0101111 && opcode != 7'b0000111 && opcode != 7'b0100111 && opcode != 7'b1010011 && opcode != 7'b1000011 && opcode != 7'b1000111 && opcode != 7'b1001011 && opcode != 7'b1001111 && opcode != 7'b0001111) begin
       if (!is_illegal) begin
-        if (txn.alu_result !== exp_alu_result)
+        if (vif.ooo_en === 1'b0 && txn.alu_result !== exp_alu_result)
           `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | alu_result mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_alu_result, txn.alu_result))
       end
     end
 
     if (exp_mem_write && opcode != 7'b0101111 && opcode != 7'b0100111) begin
-      if (txn.write_data !== exp_write_data)
+      if (vif.ooo_en === 1'b0 && txn.write_data !== exp_write_data)
         `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | write_data mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_write_data, txn.write_data))
     end
 
@@ -635,6 +657,9 @@ class riscv_sb extends uvm_scoreboard;
           end
           if (txn.fp_rd_data !== expected_mem_data)
             `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | fp mem read data mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, expected_mem_data, txn.fp_rd_data))
+          if (funct3 == 3'b010 && txn.fp_rd_data[63:32] !== 32'hFFFFFFFF) begin
+            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | FLW NaN-boxing failure. Upper 32 bits are not 1s: %0h", txn.pc, txn.instruction, txn.fp_rd_data[63:32]))
+          end
           exp_fp_rd_data = expected_mem_data;
         end else if (opcode == 7'b0101111) begin // AMO
           if (funct3 == 3'b010) begin
@@ -664,24 +689,13 @@ class riscv_sb extends uvm_scoreboard;
             end
           end
         end else begin
-          case (funct3)
-            3'b000: expected_mem_data = {{56{shadow_mem[exp_alu_result][7]}}, shadow_mem[exp_alu_result]};
-            3'b001: expected_mem_data = {{48{shadow_mem[exp_alu_result+1][7]}}, shadow_mem[exp_alu_result+1], shadow_mem[exp_alu_result]};
-            3'b010: expected_mem_data = {{32{shadow_mem[exp_alu_result+3][7]}}, shadow_mem[exp_alu_result+3], shadow_mem[exp_alu_result+2], shadow_mem[exp_alu_result+1], shadow_mem[exp_alu_result]};
-            3'b100: expected_mem_data = {56'h0, shadow_mem[exp_alu_result]};
-            3'b101: expected_mem_data = {48'h0, shadow_mem[exp_alu_result+1], shadow_mem[exp_alu_result]};
-          endcase
-          if (txn.rd_data !== expected_mem_data[31:0])
-            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | mem read data mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, expected_mem_data[31:0], txn.rd_data))
-          exp_rd_data = expected_mem_data[31:0];
-        end
-      end else begin
         if (opcode == 7'b0000111) begin
           if (funct3 == 3'b010) begin
             shadow_mem[exp_alu_result] = txn.fp_rd_data[7:0];
             shadow_mem[exp_alu_result+1] = txn.fp_rd_data[15:8];
             shadow_mem[exp_alu_result+2] = txn.fp_rd_data[23:16];
             shadow_mem[exp_alu_result+3] = txn.fp_rd_data[31:24];
+            exp_fp_rd_data = {32'hFFFFFFFF, txn.fp_rd_data[31:0]};
           end else if (funct3 == 3'b011) begin
             shadow_mem[exp_alu_result] = txn.fp_rd_data[7:0];
             shadow_mem[exp_alu_result+1] = txn.fp_rd_data[15:8];
@@ -691,28 +705,131 @@ class riscv_sb extends uvm_scoreboard;
             shadow_mem[exp_alu_result+5] = txn.fp_rd_data[47:40];
             shadow_mem[exp_alu_result+6] = txn.fp_rd_data[55:48];
             shadow_mem[exp_alu_result+7] = txn.fp_rd_data[63:56];
+            exp_fp_rd_data = txn.fp_rd_data;
           end
-          exp_fp_rd_data = txn.fp_rd_data;
+          if (txn.fp_rd_data !== exp_fp_rd_data)
+            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | fp mem read data mismatch (uninit). Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_fp_rd_data, txn.fp_rd_data))
         end else if (opcode == 7'b0101111) begin
           exp_rd_data = txn.rd_data;
+          if (txn.rd_data !== exp_rd_data)
+            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | amo read data mismatch (uninit). Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_rd_data, txn.rd_data))
           if (funct7[6:2] != 5'b00010 && funct7[6:2] != 5'b00011) begin
-            exp_write_data = txn.write_data; // Trust DUT for AMO write data if mem miss
+            logic [31:0] amo_res;
+            case (funct7[6:2])
+              5'b00000: amo_res = exp_rd_data + rs2_data; // AMOADD
+              5'b00001: amo_res = rs2_data; // AMOSWAP
+              5'b00100: amo_res = exp_rd_data ^ rs2_data; // AMOXOR
+              5'b01100: amo_res = exp_rd_data & rs2_data; // AMOAND
+              5'b01000: amo_res = exp_rd_data | rs2_data; // AMOOR
+              5'b10000: amo_res = ($signed(exp_rd_data) < $signed(rs2_data)) ? exp_rd_data : rs2_data; // AMOMIN
+              5'b10100: amo_res = ($signed(exp_rd_data) > $signed(rs2_data)) ? exp_rd_data : rs2_data; // AMOMAX
+              5'b11000: amo_res = (exp_rd_data < rs2_data) ? exp_rd_data : rs2_data; // AMOMINU
+              5'b11100: amo_res = (exp_rd_data > rs2_data) ? exp_rd_data : rs2_data; // AMOMAXU
+              default: amo_res = exp_rd_data;
+            endcase
+            exp_write_data = amo_res;
           end
         end else begin
           case (funct3)
-            3'b000, 3'b100: shadow_mem[exp_alu_result] = txn.rd_data[7:0];
-            3'b001, 3'b101: begin
+            3'b000: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              exp_rd_data = {{24{txn.rd_data[7]}}, txn.rd_data[7:0]};
+            end
+            3'b100: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              exp_rd_data = {24'h0, txn.rd_data[7:0]};
+            end
+            3'b001: begin
               shadow_mem[exp_alu_result] = txn.rd_data[7:0];
               shadow_mem[exp_alu_result+1] = txn.rd_data[15:8];
+              exp_rd_data = {{16{txn.rd_data[15]}}, txn.rd_data[15:0]};
+            end
+            3'b101: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              shadow_mem[exp_alu_result+1] = txn.rd_data[15:8];
+              exp_rd_data = {16'h0, txn.rd_data[15:0]};
             end
             3'b010: begin
               shadow_mem[exp_alu_result] = txn.rd_data[7:0];
               shadow_mem[exp_alu_result+1] = txn.rd_data[15:8];
               shadow_mem[exp_alu_result+2] = txn.rd_data[23:16];
               shadow_mem[exp_alu_result+3] = txn.rd_data[31:24];
+              exp_rd_data = txn.rd_data;
             end
           endcase
+          if (txn.rd_data !== exp_rd_data)
+            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | mem read data mismatch (uninit). Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_rd_data, txn.rd_data))
+        end
+      end
+      end else begin
+        if (opcode == 7'b0000111) begin
+          if (funct3 == 3'b010) begin
+            shadow_mem[exp_alu_result] = txn.fp_rd_data[7:0];
+            shadow_mem[exp_alu_result+1] = txn.fp_rd_data[15:8];
+            shadow_mem[exp_alu_result+2] = txn.fp_rd_data[23:16];
+            shadow_mem[exp_alu_result+3] = txn.fp_rd_data[31:24];
+            exp_fp_rd_data = {32'hFFFFFFFF, txn.fp_rd_data[31:0]};
+          end else if (funct3 == 3'b011) begin
+            shadow_mem[exp_alu_result] = txn.fp_rd_data[7:0];
+            shadow_mem[exp_alu_result+1] = txn.fp_rd_data[15:8];
+            shadow_mem[exp_alu_result+2] = txn.fp_rd_data[23:16];
+            shadow_mem[exp_alu_result+3] = txn.fp_rd_data[31:24];
+            shadow_mem[exp_alu_result+4] = txn.fp_rd_data[39:32];
+            shadow_mem[exp_alu_result+5] = txn.fp_rd_data[47:40];
+            shadow_mem[exp_alu_result+6] = txn.fp_rd_data[55:48];
+            shadow_mem[exp_alu_result+7] = txn.fp_rd_data[63:56];
+            exp_fp_rd_data = txn.fp_rd_data;
+          end
+          if (txn.fp_rd_data !== exp_fp_rd_data)
+            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | fp mem read data mismatch (uninit). Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_fp_rd_data, txn.fp_rd_data))
+        end else if (opcode == 7'b0101111) begin
           exp_rd_data = txn.rd_data;
+          if (funct7[6:2] != 5'b00010 && funct7[6:2] != 5'b00011) begin
+            logic [31:0] amo_res;
+            case (funct7[6:2])
+              5'b00000: amo_res = exp_rd_data + rs2_data; // AMOADD
+              5'b00001: amo_res = rs2_data; // AMOSWAP
+              5'b00100: amo_res = exp_rd_data ^ rs2_data; // AMOXOR
+              5'b01100: amo_res = exp_rd_data & rs2_data; // AMOAND
+              5'b01000: amo_res = exp_rd_data | rs2_data; // AMOOR
+              5'b10000: amo_res = ($signed(exp_rd_data) < $signed(rs2_data)) ? exp_rd_data : rs2_data; // AMOMIN
+              5'b10100: amo_res = ($signed(exp_rd_data) > $signed(rs2_data)) ? exp_rd_data : rs2_data; // AMOMAX
+              5'b11000: amo_res = (exp_rd_data < rs2_data) ? exp_rd_data : rs2_data; // AMOMINU
+              5'b11100: amo_res = (exp_rd_data > rs2_data) ? exp_rd_data : rs2_data; // AMOMAXU
+              default: amo_res = exp_rd_data;
+            endcase
+            exp_write_data = amo_res;
+          end
+        end else begin
+          case (funct3)
+            3'b000: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              exp_rd_data = {{24{txn.rd_data[7]}}, txn.rd_data[7:0]};
+            end
+            3'b100: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              exp_rd_data = {24'h0, txn.rd_data[7:0]};
+            end
+            3'b001: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              shadow_mem[exp_alu_result+1] = txn.rd_data[15:8];
+              exp_rd_data = {{16{txn.rd_data[15]}}, txn.rd_data[15:0]};
+            end
+            3'b101: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              shadow_mem[exp_alu_result+1] = txn.rd_data[15:8];
+              exp_rd_data = {16'h0, txn.rd_data[15:0]};
+            end
+            3'b010: begin
+              shadow_mem[exp_alu_result] = txn.rd_data[7:0];
+              shadow_mem[exp_alu_result+1] = txn.rd_data[15:8];
+              shadow_mem[exp_alu_result+2] = txn.rd_data[23:16];
+              shadow_mem[exp_alu_result+3] = txn.rd_data[31:24];
+              exp_rd_data = txn.rd_data;
+            end
+          endcase
+          if (txn.rd_data !== exp_rd_data)
+            `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | mem read data mismatch (uninit). Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_rd_data, txn.rd_data))
         end
       end
     end
@@ -770,6 +887,9 @@ class riscv_sb extends uvm_scoreboard;
       if (!exp_mem_read) begin
         if (txn.fp_rd_data !== exp_fp_rd_data)
           `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | fp_rd_data mismatch. Exp: %0h, Act: %0h", txn.pc, txn.instruction, exp_fp_rd_data, txn.fp_rd_data))
+        if (txn.instruction[26:25] == 2'b00 && txn.fp_rd_data[63:32] !== 32'hFFFFFFFF) begin
+          `uvm_error("SB_MISMATCH", $sformatf("PC: %0h, Instr: %0h | NaN-boxing failure. Upper 32 bits are not 1s: %0h", txn.pc, txn.instruction, txn.fp_rd_data[63:32]))
+        end
       end
       shadow_fpr[rd] = exp_fp_rd_data;
       shadow_csr[CSR_MSTATUS] = {shadow_csr[CSR_MSTATUS][31:15], 2'b11, shadow_csr[CSR_MSTATUS][12:0]};

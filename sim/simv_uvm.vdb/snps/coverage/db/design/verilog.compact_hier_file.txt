@@ -1,2 +1,0 @@
-\$unit::../rtl/core/alu.v::../rtl/core/control_unit.v...@3401083184 02
-tb_uvm_top4070

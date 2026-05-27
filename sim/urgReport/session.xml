@@ -1,0 +1,58 @@
+<session version="1.1" release="X-2025.06-SP2" timestp="2026-05-26 16:11:49 GMT">
+  <info>
+    <attr name="datetime" value="Tue May 26 16:11:50 2026
+"/>
+    <attr name="command" value="urg -dir simv_uvm.vdb -format text -report urgReport"/>
+    <attr name="top_instance" value="tb_uvm_top,uvm_pkg"/>
+  </info>
+  <hvp>
+    <datadef>
+      <metdef name="Line" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Cond" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Toggle" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="FSM" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Branch" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Assert" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Group" type="percent" aggregator="average" builtin="1" />
+    </datadef>
+  </hvp>
+  <old_coverage>
+  <scope type="top" name="top">
+    <metric name="Line" value="1921/2009" />
+    <metric name="Cond" value="1809/1983" />
+    <metric name="Toggle" value="45012/49606" />
+    <metric name="Branch" value="822/915" />
+    <metric name="Group" value="63.75%" />
+  </scope>
+  <scope type="instance" name="top">
+  </scope>
+  <scope type="group" name="top">
+    <scope type="group" name="riscv_uvm_pkg::riscv_cov::cg_amo_behavior">
+      <metric name="Group" value="0%" />
+    </scope>
+    <scope type="group" name="riscv_uvm_pkg::riscv_cov::cg_fp_behavior">
+      <metric name="Group" value="55%" />
+    </scope>
+    <scope type="group" name="riscv_uvm_pkg::riscv_cov::cg_instr_types">
+      <metric name="Group" value="100%" />
+    </scope>
+    <scope type="group" name="riscv_uvm_pkg::riscv_cov::cg_csr_behavior">
+      <metric name="Group" value="100%" />
+    </scope>
+  </scope>
+  <scope type="assert" name="Statistics">
+    <scorelist type="total" name="Design Hierarchy Assert">
+      <score name="Assert" value="0/0" />
+      <score name="Score" value="0.00" />
+    </scorelist>
+    <scorelist type="total" name="Module List Assert">
+      <score name="Assert" value="0/0" />
+      <score name="Score" value="0.00" />
+    </scorelist>
+    <scorelist type="total" name="Assertion">
+      <score name="Assert" value="0/0" />
+      <score name="Score" value="-nan" />
+    </scorelist>
+  </scope>
+  </old_coverage>
+</session>

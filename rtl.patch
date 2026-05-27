@@ -1,0 +1,257 @@
+diff --git a/rtl/core/control_unit.v b/rtl/core/control_unit.v
+index 383c97d..b387bee 100644
+--- a/rtl/core/control_unit.v
++++ b/rtl/core/control_unit.v
+@@ -178,7 +178,7 @@ module control_unit #(
+                 if ((EXTENSION_M && funct7 == 7'b0000001) || 
+                     (funct7 == 7'b0000000) || 
+                     (funct7 == 7'b0100000 && (funct3 == 3'b000 || funct3 == 3'b101))) begin
+-                    reg_write    = 1'b1;
++                    reg_write    = (rd_addr != 5'b0);
+                     result_sel   = 2'b00;
+                     mem_write    = 1'b0;
+                     mem_read     = 1'b0;
+@@ -198,10 +198,11 @@ module control_unit #(
+             OP_I_TYPE: begin
+                 if ((funct3 == 3'b001 && funct7 != 7'b0000000) ||
+                     (funct3 == 3'b101 && funct7 != 7'b0000000 && funct7 != 7'b0100000)) begin
++                    reg_write    = (rd_addr != 5'b0);
+                     exception = 1'b1;
+                     exception_cause = 4'd2;
+                 end else begin
+-                    reg_write    = 1'b1;
++                    reg_write    = (rd_addr != 5'b0);
+                     result_sel   = 2'b00;
+                     mem_write    = 1'b0;
+                     mem_read     = 1'b0;
+@@ -216,8 +217,8 @@ module control_unit #(
+             end
+ 
+             OP_LOAD: begin
+-                reg_write    = 1'b1;
+-                    mem_write    = 1'b0;
++                reg_write    = (rd_addr != 5'b0);
++                mem_write    = 1'b0;
+                 mem_read     = 1'b1;
+                 alu_src      = 1'b1;
+                 pc_src_auipc = 1'b0;
+@@ -263,7 +264,7 @@ module control_unit #(
+             end
+ 
+             OP_JAL: begin
+-                reg_write    = 1'b1;
++                reg_write    = (rd_addr != 5'b0);
+                 result_sel   = 2'b10;
+                 mem_write    = 1'b0;
+                 mem_read     = 1'b0;
+@@ -277,7 +278,7 @@ module control_unit #(
+             end
+ 
+             OP_JALR: begin
+-                reg_write    = 1'b1;
++                reg_write    = (rd_addr != 5'b0);
+                 result_sel   = 2'b10;
+                 mem_write    = 1'b0;
+                 mem_read     = 1'b0;
+@@ -291,7 +292,7 @@ module control_unit #(
+             end
+ 
+             OP_LUI: begin
+-                reg_write    = 1'b1;
++                reg_write    = (rd_addr != 5'b0);
+                 result_sel   = 2'b00;
+                 mem_write    = 1'b0;
+                 mem_read     = 1'b0;
+@@ -305,7 +306,7 @@ module control_unit #(
+             end
+ 
+             OP_AUIPC: begin
+-                reg_write    = 1'b1;
++                reg_write    = (rd_addr != 5'b0);
+                 result_sel   = 2'b00;
+                 mem_write    = 1'b0;
+                 mem_read     = 1'b0;
+@@ -327,17 +328,17 @@ module control_unit #(
+                         if (amo_op == 5'b00010) begin // LR
+                             mem_read   = 1'b1;
+                             mem_write  = 1'b0;
+-                            reg_write  = 1'b1;
++                            reg_write  = (rd_addr != 5'b0);
+                             result_sel = 2'b01;
+                         end else if (amo_op == 5'b00011) begin // SC
+                             mem_read   = 1'b0;
+                             mem_write  = 1'b1;
+-                            reg_write  = 1'b1;
+                             result_sel = 2'b01;
++                            reg_write  = (rd_addr != 5'b0);
+                         end else begin // Other AMOs
+                             mem_read   = 1'b1;
+                             mem_write  = 1'b1;
+-                            reg_write  = 1'b1;
++                            reg_write  = (rd_addr != 5'b0);
+                             result_sel = 2'b01;
+                         end
+                     end else begin
+@@ -374,7 +375,7 @@ module control_unit #(
+                         end
+                     end else begin
+                         // Zicsr
+-                        reg_write   = 1'b1;
++                        reg_write   = (rd_addr != 5'b0);
+                         result_sel  = 2'b11;
+                         csr_imm_sel = funct3[2];
+                         
+@@ -413,7 +414,7 @@ module control_unit #(
+                 if (EXTENSION_F || EXTENSION_D) begin
+                     if (funct3 == 3'b010 || funct3 == 3'b011) begin
+                         mem_read     = 1'b1;
+-                        fp_we        = 1'b1;
++                        fp_we        = (rd_addr != 5'b0);
+                         fp_mem_read  = 1'b1;
+                         alu_src      = 1'b1;
+                         imm_sel      = 3'b000; // IMM_I
+@@ -452,7 +453,7 @@ module control_unit #(
+ 
+             OP_FMADD: begin
+                 if (EXTENSION_F || EXTENSION_D) begin
+-                    fp_we        = 1'b1;
++                    fp_we        = (rd_addr != 5'b0);
+                     fmt          = funct7[1:0];
+                     rm           = funct3;
+                     fp_fflags_we = 1'b1;
+@@ -462,7 +463,7 @@ module control_unit #(
+ 
+             OP_FMSUB: begin
+                 if (EXTENSION_F || EXTENSION_D) begin
+-                    fp_we        = 1'b1;
++                    fp_we        = (rd_addr != 5'b0);
+                     fmt          = funct7[1:0];
+                     rm           = funct3;
+                     fp_fflags_we = 1'b1;
+@@ -472,7 +473,7 @@ module control_unit #(
+ 
+             OP_FNMSUB: begin
+                 if (EXTENSION_F || EXTENSION_D) begin
+-                    fp_we        = 1'b1;
++                    fp_we        = (rd_addr != 5'b0);
+                     fmt          = funct7[1:0];
+                     rm           = funct3;
+                     fp_fflags_we = 1'b1;
+@@ -482,7 +483,7 @@ module control_unit #(
+ 
+             OP_FNMADD: begin
+                 if (EXTENSION_F || EXTENSION_D) begin
+-                    fp_we        = 1'b1;
++                    fp_we        = (rd_addr != 5'b0);
+                     fmt          = funct7[1:0];
+                     rm           = funct3;
+                     fp_fflags_we = 1'b1;
+@@ -496,64 +497,64 @@ module control_unit #(
+                     rm  = funct3;
+                     case (funct7[6:2])
+                         5'b00000: begin // FADD
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FADD;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b00001: begin // FSUB
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FSUB;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b00010: begin // FMUL
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FMUL;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b00011: begin // FDIV
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FDIV;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b01011: begin // FSQRT
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FSQRT;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b00100: begin // FSGNJ
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FSGNJ;
+                         end
+                         5'b00101: begin // FMIN/MAX
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FMIN;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b01000: begin // FCVT.S.D/D.S
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             fp_alu_op    = FP_ALU_FCVT;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b10100: begin // FCMP
+-                            reg_write    = 1'b1;
++                            reg_write    = (rd_addr != 5'b0);
+                             fp_to_int    = 1'b1;
+                             fp_alu_op    = FP_ALU_FCMP;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b11000: begin // FCVT.W.S/D
+-                            reg_write    = 1'b1;
++                            reg_write    = (rd_addr != 5'b0);
+                             fp_to_int    = 1'b1;
+                             fp_alu_op    = FP_ALU_FCVT;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b11010: begin // FCVT.S/D.W
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             int_to_fp    = 1'b1;
+                             fp_alu_op    = FP_ALU_FCVT;
+                             fp_fflags_we = 1'b1;
+                         end
+                         5'b11100: begin // FMV.X.W/D or FCLASS
+-                            reg_write    = 1'b1;
++                            reg_write    = (rd_addr != 5'b0);
+                             fp_to_int    = 1'b1;
+                             if (funct3 == 3'b001) begin
+                                 fp_alu_op = FP_ALU_FCLASS;
+@@ -562,7 +563,7 @@ module control_unit #(
+                             end
+                         end
+                         5'b11110: begin // FMV.W/D.X
+-                            fp_we        = 1'b1;
++                            fp_we        = (rd_addr != 5'b0);
+                             int_to_fp    = 1'b1;
+                             fp_alu_op    = FP_ALU_FMV;
+                         end
+@@ -684,4 +685,4 @@ module control_unit #(
+         end
+     end
+ 
+-endmodule
++endmodule  
+\ No newline at end of file
+diff --git a/rtl/core/riscv_top.v b/rtl/core/riscv_top.v
+index c113c96..da6a591 100644
+--- a/rtl/core/riscv_top.v
++++ b/rtl/core/riscv_top.v
+@@ -626,9 +626,10 @@ module riscv_top #(
+     reg valid_ex, valid_mem, valid_wb;
+     
+     reg cdb_done_mem, cdb_done_wb;
++    reg cdb_done_mem_q;
+ 
+     wire ex_ready = !(mem_read_ex || mem_write_ex || fp_mem_read_ex || fp_mem_write_ex || csr_write_ex || result_sel_ex == 2'b11 || amo_en_ex);
+-    wire ex_wants_cdb = valid_ex && (ex_ready || exception_ex);
++    wire ex_wants_cdb = valid_ex && (ex_ready || exception_ex) && ~mem_read_ex;
+     wire mem_ready = !(mem_read_mem || fp_mem_read_mem || csr_write_mem || result_sel_mem == 2'b11 || amo_en_mem);
+     wire mem_wants_cdb = valid_mem && ((!cdb_done_mem && mem_ready) || exception_mem);
+     wire wb_wants_cdb = valid_wb && (!cdb_done_wb || exception_wb);
