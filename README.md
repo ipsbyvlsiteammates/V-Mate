@@ -1,7 +1,7 @@
 # V-mate RISC-V Core
 
 ## Introduction
-Welcome to the **V-mate** project, an advanced, open-source RISC-V processor core. V-mate is designed to deliver high performance and reliability, implementing the RISC-V RV32IMAFD architecture based on the official RISC-V specifications.
+Welcome to the **V-mate** project, an advanced, open-source RISC-V processor core. V-mate is designed to deliver high performance and reliability, implementing the RISC-V RV32IMAFD architecture. This core was designed from scratch based on the official RISC-V unprivileged and privileged specifications, with no pre-existing base design.
 
 **This design was developed in full by a single Hu-mind.ai VLSI teammate.**
 
