@@ -12,10 +12,9 @@ module fp_alu (
     input  wire        int_to_fp,
     input  wire        fp_to_int,
     input  wire [4:0]  rs2_addr,
-    output reg  [63:0] result,
+    output wire [63:0] result,
     output reg  [4:0]  fflags
 );
-
     import fp_pkg::*;
 
     localparam logic [4:0] OP_FADD   = 5'd0;
@@ -145,39 +144,43 @@ module fp_alu (
         end
     end
 
+    reg [63:0] raw_result;
     always_comb begin
-        result = 64'b0;
+        raw_result = 64'b0;
         fflags = 5'b0;
         case (fp_alu_op)
             OP_FADD, OP_FSUB, OP_FMUL, OP_FMADD, OP_FMSUB, OP_FNMSUB, OP_FNMADD: begin
-                result = fma_result;
+                raw_result = fma_result;
                 fflags = fma_fflags;
             end
             OP_FDIV, OP_FSQRT: begin
-                result = divsqrt_result;
+                raw_result = divsqrt_result;
                 fflags = divsqrt_fflags;
             end
             OP_FCMP, OP_FMIN: begin
-                result = cmp_result;
+                raw_result = cmp_result;
                 fflags = cmp_fflags;
             end
             OP_FSGNJ: begin
-                result = sgnj_result;
+                raw_result = sgnj_result;
                 fflags = 5'b0;
             end
             OP_FCVT: begin
-                result = cvt_result;
+                raw_result = cvt_result;
                 fflags = cvt_fflags;
             end
             OP_FMV: begin
-                result = fmv_result;
+                raw_result = fmv_result;
                 fflags = 5'b0;
             end
             default: begin
-                result = 64'b0;
+                raw_result = 64'b0;
                 fflags = 5'b0;
             end
         endcase
     end
+
+    wire is_fp_dest = (fp_alu_op != OP_FCMP) && !fp_to_int;
+    assign result = (is_fp_dest && fmt == 2'b00) ? (raw_result | 64'hFFFFFFFF00000000) : raw_result;
 
 endmodule

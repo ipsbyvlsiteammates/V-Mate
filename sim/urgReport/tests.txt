@@ -2,75 +2,21 @@ Tests
 
 Total Coverage Summary 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT GROUP  
- 86.23  95.62  91.23  90.74 --      89.84 --      63.75 
+ 31.40  55.70  36.65  10.14 --      37.54  33.33  15.01 
 
 
-Total tests in report: 65
+Total tests in report: 11
 -------------------------------------------------------------------------------
 Data from the following tests was used to generate this report
-simv_uvm/riscv_machine_mode_rand_test_3         
-simv_uvm/riscv_floating_point_arithmetic_test_1 
-simv_uvm/riscv_loop_test_3                      
-simv_uvm/riscv_unaligned_load_store_test_3      
-simv_uvm/riscv_jump_stress_test_3               
-simv_uvm/riscv_floating_point_mmu_stress_test_3 
-simv_uvm/riscv_privileged_mode_rand_test_1      
-simv_uvm/riscv_floating_point_rand_test_0       
-simv_uvm/riscv_floating_point_rand_test_2       
-simv_uvm/riscv_rand_jump_test_0                 
-simv_uvm/riscv_amo_test_2                       
-simv_uvm/riscv_floating_point_arithmetic_test_3 
-simv_uvm/riscv_loop_test_1                      
-simv_uvm/riscv_mmu_stress_test_0                
-simv_uvm/riscv_ebreak_test_2                    
-simv_uvm/riscv_mmu_stress_test_1                
-simv_uvm/riscv_machine_mode_rand_test_0         
-simv_uvm/riscv_illegal_instr_test_0             
-simv_uvm/riscv_amo_test_0                       
-simv_uvm/riscv_rand_jump_test_3                 
-simv_uvm/riscv_rand_instr_test_1                
-simv_uvm/riscv_arithmetic_basic_test_3          
-simv_uvm/riscv_privileged_mode_rand_test_3      
-simv_uvm/riscv_floating_point_mmu_stress_test_0 
-simv_uvm/riscv_amo_test_1                       
-simv_uvm/riscv_privileged_mode_rand_test_0      
-simv_uvm/riscv_arithmetic_basic_test_2          
-simv_uvm/riscv_floating_point_mmu_stress_test_1 
-simv_uvm/riscv_no_fence_test_0                  
-simv_uvm/riscv_illegal_instr_test_2             
-simv_uvm/riscv_mmu_stress_test_2                
-simv_uvm/riscv_floating_point_arithmetic_test_0 
-simv_uvm/riscv_illegal_instr_test_1             
-simv_uvm/riscv_mmu_stress_test_3                
-simv_uvm/riscv_machine_mode_rand_test_2         
-simv_uvm/riscv_ebreak_test_3                    
-simv_uvm/riscv_privileged_mode_rand_test_2      
-simv_uvm/riscv_rand_jump_test_1                 
-simv_uvm/test                                   
-simv_uvm/riscv_unaligned_load_store_test_0      
-simv_uvm/riscv_floating_point_mmu_stress_test_2 
-simv_uvm/riscv_jump_stress_test_1               
-simv_uvm/riscv_loop_test_0                      
-simv_uvm/riscv_jump_stress_test_2               
-simv_uvm/riscv_rand_instr_test_3                
-simv_uvm/riscv_no_fence_test_3                  
-simv_uvm/riscv_floating_point_arithmetic_test_2 
-simv_uvm/riscv_unaligned_load_store_test_2      
-simv_uvm/riscv_amo_test_3                       
-simv_uvm/riscv_no_fence_test_1                  
-simv_uvm/riscv_ebreak_test_1                    
-simv_uvm/riscv_loop_test_2                      
-simv_uvm/riscv_arithmetic_basic_test_0          
-simv_uvm/riscv_ebreak_test_0                    
-simv_uvm/riscv_floating_point_rand_test_1       
-simv_uvm/riscv_no_fence_test_2                  
-simv_uvm/riscv_illegal_instr_test_3             
-simv_uvm/riscv_unaligned_load_store_test_1      
-simv_uvm/riscv_rand_jump_test_2                 
-simv_uvm/riscv_machine_mode_rand_test_1         
-simv_uvm/riscv_jump_stress_test_0               
-simv_uvm/riscv_floating_point_rand_test_3       
-simv_uvm/riscv_rand_instr_test_2                
-simv_uvm/riscv_arithmetic_basic_test_1          
-simv_uvm/riscv_rand_instr_test_0                
+simv_uvm/riscv_m_mode_serialization_test_0      
+simv_uvm/riscv_ooo_mode_toggling_test_0         
+simv_uvm/riscv_clock_gating_stall_test_0        
+simv_uvm/riscv_async_interrupt_ooo_fp_test_0    
+simv_uvm/riscv_branch_mispredict_overlap_test_0 
+simv_uvm/riscv_speculative_csr_test_0           
+simv_uvm/riscv_amo_ooo_fp_test_0                
+simv_uvm/riscv_fcsr_dependency_test_0           
+simv_uvm/riscv_precise_exceptions_fp_test_0     
+simv_uvm/riscv_nan_boxing_forwarding_test_0     
+simv_uvm/riscv_lsq_forwarding_trap_test_0       
 

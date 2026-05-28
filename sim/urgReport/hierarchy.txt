@@ -3,16 +3,16 @@ Design Hierarchy
 
 ----------------
 SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT            
- 91.86  95.62  91.23  90.74 --      89.84 --     tb_uvm_top 
+ 36.58  55.70  36.65  10.14 --      37.54  42.86 tb_uvm_top 
   
   ----------------
   SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT     
-   92.04  95.98  91.31  90.73 --      90.15 --     dut 
+   36.47  55.39  36.58  10.08 --      37.44  42.86 dut 
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                    
-     96.24 --     --      96.24 --     --     --     bound_if           
-     81.01  88.33  94.29  60.45 --      80.95 --     gen_csr.u_csr_file 
+     22.55 --     --      22.55 --     --     --     bound_if           
+     30.99  41.67  51.43   9.45 --      21.43 --     gen_csr.u_csr_file 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT             
@@ -20,67 +20,67 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                     
-     97.90  99.57  97.51  94.77 --      99.75 --     gen_fp_alu.u_fp_alu 
+     29.78  55.81  23.89   1.69 --      37.72 --     gen_fp_alu.u_fp_alu 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT          
-       97.03 100.00 100.00  88.12 --     100.00 --     u_fp_cmp 
-       97.26  98.17  94.21  97.79 --      98.88 --     u_fp_cvt 
+       20.78  39.53  19.44   0.00 --      24.14 --     u_fp_cmp 
+       25.99  52.51  15.26   0.25 --      35.96 --     u_fp_cvt 
         
         ----------------
         SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                 
-         98.28 100.00  95.45  97.66 --     100.00 --     u_fp_round_pack 
+         26.76  56.72   8.33   0.00 --      42.00 --     u_fp_round_pack 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT              
-       96.31 100.00  94.87  90.37 --     100.00 --     u_fp_divsqrt 
+       27.80  55.93  19.49   0.00 --      35.79 --     u_fp_divsqrt 
         
         ----------------
         SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT              
-         98.31 100.00  94.70  98.56 --     100.00 --     u_round_pack 
+         20.59  44.03   8.33   0.00 --      30.00 --     u_round_pack 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT          
-       98.73 100.00  99.24  95.66 --     100.00 --     u_fp_fma 
+       33.14  57.20  23.48   5.38 --      46.51 --     u_fp_fma 
         
         ----------------
         SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT              
-         99.17 100.00  98.48  98.20 --     100.00 --     u_round_pack 
+         32.19  58.21  12.12  12.43 --      46.00 --     u_round_pack 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                 
-       99.92 100.00 100.00  99.70 --     100.00 --     u_fp_sgnj       
-       99.64 100.00 100.00  98.55 --     100.00 --     u_fp_unpack_rs1 
-       99.64 100.00 100.00  98.55 --     100.00 --     u_fp_unpack_rs2 
-       99.64 100.00 100.00  98.55 --     100.00 --     u_fp_unpack_rs3 
+       38.54  62.50  41.67   0.00 --      50.00 --     u_fp_sgnj       
+       40.79  84.00  37.04   0.00 --      42.11 --     u_fp_unpack_rs1 
+       36.47  72.00  37.04   0.00 --      36.84 --     u_fp_unpack_rs2 
+       36.47  72.00  37.04   0.00 --      36.84 --     u_fp_unpack_rs3 
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT               
-     97.60 100.00 100.00  99.48 --      90.91 --     gen_fpr.u_fpr 
+     50.74  77.78  62.96   7.67 --      54.55 --     gen_fpr.u_fpr 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT             
-      100.00 100.00 100.00 100.00 --     100.00 --     u_local_icg 
+       93.75 100.00 100.00  75.00 --     100.00 --     u_local_icg 
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                
-     96.58 --     --      96.58 --     --     --     sva_inst       
-     89.50  83.02 100.00 100.00 --      75.00 --     u_alu          
-     85.43  91.22  78.95  92.86 --      78.70 --     u_control_unit 
-     86.13  75.44  96.43  87.88 --      84.78 --     u_dmem         
+     42.66 --     --      42.47 --     --      42.86 sva_inst       
+      3.56   3.77   7.69   0.00 --       2.78 --     u_alu          
+     19.84  17.56  11.70  41.76 --       8.33 --     u_control_unit 
+     16.68  15.79  32.14   1.41 --      17.39 --     u_dmem         
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT             
-      100.00 100.00 100.00 100.00 --     100.00 --     u_local_icg 
+       93.75 100.00 100.00  75.00 --     100.00 --     u_local_icg 
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                   
-    100.00 100.00 100.00 100.00 --     100.00 --     u_forwarding_unit 
+     48.91  60.00  61.29  41.03 --      33.33 --     u_forwarding_unit 
      79.17 100.00  66.67  50.00 --     100.00 --     u_global_icg      
-    100.00 100.00 100.00 100.00 --     100.00 --     u_hazard_unit     
-     98.44 --     --      98.44 --     --     --     u_imem            
-     91.07  87.50 --     100.00 --      85.71 --     u_imm_gen         
-     69.72  83.10  55.56  67.48 --      72.73 --     u_iq              
+     59.87  72.22  61.70  55.56 --      50.00 --     u_hazard_unit     
+     58.59 --     --      58.59 --     --     --     u_imem            
+     42.45  25.00 --      88.06 --      14.29 --     u_imm_gen         
+     54.28  83.10  55.56   5.75 --      72.73 --     u_iq              
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT       
@@ -88,12 +88,12 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT               
-     86.76  90.00 --      86.94 --      83.33 --     u_pc          
-     91.04 100.00 --      98.11 --      75.00 --     u_pipe_ex_mem 
-     91.23 100.00 --      98.68 --      75.00 --     u_pipe_id_ex  
-     99.23 100.00 --      97.70 --     100.00 --     u_pipe_if_id  
-     91.33 100.00 --      98.98 --      75.00 --     u_pipe_mem_wb 
-     85.57 100.00  76.56  89.84 --      75.86 --     u_rat         
+     48.71  70.00 --      26.12 --      50.00 --     u_pc          
+     63.12 100.00 --      14.36 --      75.00 --     u_pipe_ex_mem 
+     64.06 100.00 --      17.18 --      75.00 --     u_pipe_id_ex  
+     80.53 100.00 --      41.58 --     100.00 --     u_pipe_if_id  
+     65.92 100.00 --      22.77 --      75.00 --     u_pipe_mem_wb 
+     63.72  88.46  57.81  50.00 --      58.62 --     u_rat         
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT       
@@ -101,7 +101,7 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT                 
-     95.65 100.00  92.11  99.58 --      90.91 --     u_register_file 
+     64.35 100.00  68.42  16.25 --      72.73 --     u_register_file 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT             
@@ -109,9 +109,13 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT
     
     ----------------
     SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT       
-     89.43 100.00  61.11  96.59 --     100.00 --     u_rob 
+     64.41 100.00  50.00   7.63 --     100.00 --     u_rob 
       
       ----------------
       SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT       
        79.17 100.00  66.67  50.00 --     100.00 --     u_icg 
+
+----------------
+SCORE  LINE   COND   TOGGLE FSM    BRANCH ASSERT         
+  0.00 --     --     --     --     --       0.00 uvm_pkg 
 

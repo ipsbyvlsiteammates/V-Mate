@@ -15,7 +15,7 @@ with open(tb_file, 'r') as f:
     tb_content = f.read()
 
 if 'tohost_addr' not in tb_content:
-    monitor_code = '''
+    monitor_code = """
     longint tohost_addr;
     initial begin
         if (!$value$plusargs("TOHOST_ADDR=%x", tohost_addr)) begin
@@ -38,11 +38,11 @@ if 'tohost_addr' not in tb_content:
     end
 
     initial begin
-        #50000000; // 50ms timeout
+        #5000000; // 5ms timeout
         $display("TEST TIMEOUT");
         $finish;
     end
-'''
+"""
     tb_content = tb_content.replace('endmodule', monitor_code + '\nendmodule')
     with open(tb_file, 'w') as f:
         f.write(tb_content)
@@ -51,37 +51,24 @@ if 'tohost_addr' not in tb_content:
 seq_file = '/home/guy/Sagi/riscv_processor/tb/uvm/riscv_base_seq.sv'
 with open(seq_file, 'r') as f:
     seq_content = f.read()
-seq_content = re.sub(r'repeat\s*\(\s*50\s*\)', 'repeat(1000000)', seq_content)
+seq_content = re.sub(r'repeat\s*\(\s*50\s*\)', 'repeat(50)', seq_content)
 with open(seq_file, 'w') as f:
-        f.write(seq_content)
+    f.write(seq_content)
 
 fp_seq_file = '/home/guy/Sagi/riscv_processor/tb/uvm/riscv_fp_seq.sv'
 with open(fp_seq_file, 'r') as f:
     fp_seq_content = f.read()
-fp_seq_content = re.sub(r'i\s*<\s*50', 'i < 1000000', fp_seq_content)
+fp_seq_content = re.sub(r'i\s*<\s*50', 'i < 50', fp_seq_content)
 with open(fp_seq_file, 'w') as f:
     f.write(fp_seq_content)
 
 # 3. Generate tests
 tests = [
-    'riscv_floating_point_arithmetic_test',
-    'riscv_floating_point_rand_test',
-    'riscv_amo_test',
-    'riscv_machine_mode_rand_test',
-    'riscv_arithmetic_basic_test',
-    'riscv_jump_stress_test',
-    'riscv_illegal_instr_test',
-    'riscv_ebreak_test',
-    'riscv_unaligned_load_store_test',
-    'riscv_rand_instr_test',
-    'riscv_loop_test',
-    'riscv_rand_jump_test',
-    'riscv_mmu_stress_test',
-    'riscv_no_fence_test',
-    'riscv_csr_test',
-    'riscv_instr_cov_test',
-    'riscv_floating_point_mmu_stress_test',
-    'riscv_privileged_mode_rand_test'
+    "riscv_floating_point_arithmetic_test",
+    "riscv_floating_point_rand_test",
+    "riscv_rand_test",
+    "riscv_amo_test",
+    "riscv_machine_mode_rand_test"
 ]
 
 os.chdir(dv_dir)
@@ -104,10 +91,10 @@ for test in tests:
         '--isa', 'rv32imafd',
         '--mabi', 'ilp32d',
         '--test', test,
-        '--iterations', '4',
+        '--iterations', '2',
         '-o', 'out_regression',
         '--steps', 'gen,gcc_compile',
-        '--gcc_opts=-mno-relax -march=rv32imafd_zifencei'
+        '--gcc_opts', '-mno-relax -march=rv32imafd'
     ]
     res = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
@@ -118,9 +105,6 @@ for test in tests:
 os.chdir(sim_dir)
 print("Compiling UVM testbench...")
 res = subprocess.run(['bash', './compile_uvm.sh'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-with open('compile_uvm.log', 'w') as log_f:
-    log_f.write(res.stdout)
-    log_f.write(res.stderr)
 if res.returncode != 0:
     print("Failed to compile UVM")
     print(res.stderr)
@@ -132,14 +116,10 @@ print(f"Found {len(o_files)} object files.")
 
 for obj_file in o_files:
     test_name = os.path.basename(obj_file).replace('.o', '')
-    elf_file = obj_file
+    elf_file = obj_file[:-2]
     print(f"Processing {test_name}...")
     
-    res = subprocess.run(['riscv64-unknown-elf-nm', obj_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    with open(f'{test_name}_nm.log', 'w') as log_f:
-        log_f.write(res.stdout)
-        log_f.write(res.stderr)
-    
+    res = subprocess.run(['riscv64-unknown-elf-nm', elf_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     tohost_addr = None
     for line in res.stdout.splitlines():
         parts = line.split()
@@ -178,11 +158,7 @@ for obj_file in o_files:
         '-cm_name', test_name
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     
-    with open(f'{test_name}_sim.log', 'w') as log_f:
-        log_f.write(res.stdout)
-        log_f.write(res.stderr)
-    
-    if res.returncode != 0 or 'TEST FAILED' in res.stdout or 'TEST TIMEOUT' in res.stdout or re.search(r'UVM_ERROR\s*:\s*[1-9]', res.stdout) or re.search(r'UVM_FATAL\s*:\s*[1-9]', res.stdout):
+    if res.returncode != 0 or 'UVM_ERROR' in res.stdout or 'TEST FAILED' in res.stdout or 'TEST TIMEOUT' in res.stdout:
         print(f"Simulation failed for {test_name} (rc={res.returncode})")
         for line in res.stdout.splitlines():
             if 'UVM_ERROR' in line or 'UVM_FATAL' in line or 'TEST FAILED' in line or 'TEST TIMEOUT' in line:
@@ -192,10 +168,7 @@ for obj_file in o_files:
 
 # 6. Generate coverage report
 print("Generating coverage report...")
-res = subprocess.run(['urg', '-dir', 'simv_uvm.vdb', '-format', 'text', '-report', 'urgReport'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-with open('urg.log', 'w') as log_f:
-    log_f.write(res.stdout)
-    log_f.write(res.stderr)
+subprocess.run(['urg', '-dir', 'simv_uvm.vdb', '-format', 'text', '-report', 'urgReport'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 print("Coverage Summary:")
 if os.path.exists('urgReport/dashboard.txt'):

@@ -3,12 +3,49 @@ Assertions
 
 Assertions by Category
            ASSERT PROPERTIES SEQUENCES
-Total           0          0         0
+Total           9          0         0
+Category 0      9          0         0
 
 -------------------------------------------------------------------------------
 
 Assertions by Severity
            ASSERT PROPERTIES SEQUENCES
-Total           0          0         0
+Total           9          0         0
+Severity 0      9          0         0
+
+-------------------------------------------------------------------------------
+
+Summary for Assertions
+                 NUMBER PERCENT
+Total Number          9  100.00
+Uncovered             6   66.67
+Success               3   33.33
+Failure               0    0.00
+Incomplete            0    0.00
+Without Attempts      2   22.22
+
+-------------------------------------------------------------------------------
+
+Detail Report for Assertions
+
+Assertions Uncovered:
+                       ASSERTIONS                       CATEGORY SEVERITY ATTEMPTS REAL SUCCESSES FAILURES INCOMPLETE
+tb_uvm_top.dut.sva_inst.unnamed$$_1                            0        0      561              0        0          0
+tb_uvm_top.dut.sva_inst.unnamed$$_2                            0        0      561              0        0          0
+tb_uvm_top.dut.sva_inst.unnamed$$_5                            0        0      561              0        0          0
+tb_uvm_top.dut.sva_inst.unnamed$$_6                            0        0      561              0        0          0
+uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1         0        0        0              0        0          0
+uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1        0        0        0              0        0          0
+
+Assertions Success:
+             ASSERTIONS             CATEGORY SEVERITY ATTEMPTS REAL SUCCESSES FAILURES INCOMPLETE
+tb_uvm_top.dut.sva_inst.unnamed$$_0        0        0      561            539        0          0
+tb_uvm_top.dut.sva_inst.unnamed$$_3        0        0      561            539        0          0
+tb_uvm_top.dut.sva_inst.unnamed$$_4        0        0      561            539        0          0
+
+Assertions Without Attempts:
+                       ASSERTIONS                       CATEGORY SEVERITY ATTEMPTS REAL SUCCESSES FAILURES INCOMPLETE
+uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1         0        0        0              0        0          0
+uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1        0        0        0              0        0          0
 
 

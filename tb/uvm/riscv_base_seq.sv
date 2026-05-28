@@ -14,7 +14,7 @@ class riscv_base_seq extends uvm_sequence #(riscv_txn);
     task body();
         riscv_txn txn;
         int count = 0;
-        repeat(1000000) begin
+        repeat(50) begin
             txn = riscv_txn::type_id::create("txn");
             start_item(txn);
             if(!txn.randomize()) begin

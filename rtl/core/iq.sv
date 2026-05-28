@@ -10,7 +10,7 @@ module iq #(
     // Dispatch Interface
     input  logic        dispatch_en,
     input  logic [3:0]  rob_idx,
-    input  logic [9:0]  op_type,
+    input  logic [31:0] op_type,
     input  logic [4:0]  alu_op,
     input  logic [31:0] pc,
     input  logic [31:0] imm,
@@ -35,7 +35,7 @@ module iq #(
     // Issue Interface
     output logic        issue_en,
     output logic [3:0]  issue_rob_idx,
-    output logic [9:0]  issue_op_type,
+    output logic [31:0] issue_op_type,
     output logic [4:0]  issue_alu_op,
     output logic [31:0] issue_pc,
     output logic [31:0] issue_imm,
@@ -55,7 +55,7 @@ module iq #(
     typedef struct packed {
         logic        valid;
         logic [3:0]  rob_idx;
-        logic [9:0]  op_type;
+        logic [31:0] op_type;
         logic [4:0]  alu_op;
         logic [31:0] pc;
         logic [31:0] imm;
@@ -107,11 +107,11 @@ module iq #(
             rs2_match[i] = entries[i].valid && entries[i].rs2_wait && cdb_en && (entries[i].rs2_rob_idx == cdb_rob_idx);
             rs3_match[i] = entries[i].valid && entries[i].rs3_wait && cdb_en && (entries[i].rs3_rob_idx == cdb_rob_idx);
             
-            is_mem_op = (entries[i].op_type[9:3] == 7'b0000011) || 
-                        (entries[i].op_type[9:3] == 7'b0100011) || 
-                        (entries[i].op_type[9:3] == 7'b0101011) || 
-                        (entries[i].op_type[9:3] == 7'b0000111) || 
-                        (entries[i].op_type[9:3] == 7'b0100111);
+            is_mem_op = (entries[i].op_type[6:0] == 7'b0000011) || 
+                        (entries[i].op_type[6:0] == 7'b0100011) || 
+                        (entries[i].op_type[6:0] == 7'b0101011) || 
+                        (entries[i].op_type[6:0] == 7'b0000111) || 
+                        (entries[i].op_type[6:0] == 7'b0100111);
             
             mem_ready = !is_mem_op || (entries[i].rob_idx == rob_head);
 

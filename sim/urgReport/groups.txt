@@ -2,14 +2,14 @@ Testbench Group List
 
 Total Groups Coverage Summary 
 SCORE  INST SCORE WEIGHT 
- 63.75  63.75     1      
+ 15.01  15.01     1      
 
 
 Total groups in report: 4
 -------------------------------------------------------------------------------
 SCORE  INSTANCES WEIGHT GOAL   AT LEAST PER INSTANCE AUTO BIN MAX PRINT MISSING COMMENT NAME                                      
   0.00   0.00    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_amo_behavior 
- 55.00  55.00    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_fp_behavior  
-100.00 100.00    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_instr_types  
-100.00 100.00    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_csr_behavior 
+  7.14   7.14    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_instr_types  
+ 11.25  11.25    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_fp_behavior  
+ 41.67  41.67    1      100    1        1            64           64                    riscv_uvm_pkg::riscv_cov::cg_csr_behavior 
 

@@ -289,11 +289,24 @@ module riscv_top #(
         .flush(final_flush)
     );
 
+
+    // --- IQ Data Multiplexing ---
+    wire iq_is_fp_rs1 = (instruction_id[6:0] == 7'b1000011) || (instruction_id[6:0] == 7'b1000111) || 
+                        (instruction_id[6:0] == 7'b1001011) || (instruction_id[6:0] == 7'b1001111) || 
+                        ((instruction_id[6:0] == 7'b1010011) && (instruction_id[31:27] != 5'b11110) && (instruction_id[31:27] != 5'b11010));
+
+    wire iq_is_fp_rs2 = (instruction_id[6:0] == 7'b1000011) || (instruction_id[6:0] == 7'b1000111) || 
+                        (instruction_id[6:0] == 7'b1001011) || (instruction_id[6:0] == 7'b1001111) || 
+                        (instruction_id[6:0] == 7'b1010011) || (instruction_id[6:0] == 7'b0100111);
+
+    wire [63:0] iq_rs1_data_in = iq_is_fp_rs1 ? (FLEN == 64 ? fp_rs1_data_id : {32'b0, fp_rs1_data_id[31:0]}) : {32'b0, rs1_data_id};
+    wire [63:0] iq_rs2_data_in = iq_is_fp_rs2 ? (FLEN == 64 ? fp_rs2_data_id : {32'b0, fp_rs2_data_id[31:0]}) : {32'b0, rs2_data_id};
+
     iq #(.IQ_DEPTH(8)) u_iq (
         .clk(global_gated_clk), .rst_n(rst_n), .ooo_en(ooo_en), .flush(final_flush),
-        .dispatch_en(dispatch_en), .rob_idx(rob_idx_disp), .op_type({instruction_id[31:25], instruction_id[14:12]}), .alu_op(alu_op_id), .pc(pc_id), .imm(imm_out_id),
-        .rs1_wait(1'b0), .rs1_rob_idx(rs1_rob_idx), .rs1_data({32'b0, rs1_data_id}),
-        .rs2_wait(1'b0), .rs2_rob_idx(rs2_rob_idx), .rs2_data({32'b0, rs2_data_id}),
+        .dispatch_en(dispatch_en), .rob_idx(rob_idx_disp), .op_type(instruction_id), .alu_op(alu_op_id), .pc(pc_id), .imm(imm_out_id),
+        .rs1_wait(1'b0), .rs1_rob_idx(rs1_rob_idx), .rs1_data(iq_rs1_data_in),
+        .rs2_wait(1'b0), .rs2_rob_idx(rs2_rob_idx), .rs2_data(iq_rs2_data_in),
         .rs3_wait(1'b0), .rs3_rob_idx(rs3_rob_idx), .rs3_data( FLEN == 64 ? fp_rs3_data_id : {32'b0, fp_rs3_data_id[31:0]} ),
         .iq_full(iq_full), .rob_head(rob_head),
         .cdb_en(cdb_en), .cdb_rob_idx(cdb_rob_idx), .cdb_data(cdb_data),

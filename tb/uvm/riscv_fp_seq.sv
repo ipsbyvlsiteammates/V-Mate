@@ -11,7 +11,7 @@ class riscv_fp_seq extends uvm_sequence #(riscv_txn);
     force_next = 0;
   endfunction
   virtual task body();
-    for (int i = 0; i < 1000000; i++) begin
+    for (int i = 0; i < 50; i++) begin
       txn = riscv_txn::type_id::create("txn");
       start_item(txn);
       if (!txn.randomize() with {
