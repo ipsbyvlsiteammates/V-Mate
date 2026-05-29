@@ -30,3 +30,13 @@ The V-mate core is verified using a state-of-the-art Universal Verification Meth
 
 ## Legal Disclaimer
 This repository and its contents are published "as-is". No warranties, express or implied, are provided. The authors and Hu-mind.ai take no responsibility for any issues, damages, or liabilities arising from the use of this design. Use at your own risk.
+## Running Tests
+
+Since local scripts and binaries have been removed from the public repository, you will need to install and configure several external tools and repositories to run the verification and compliance tests:
+
+1. **Device Tree Compiler (dtc)**: Required by Spike.
+2. **Spike (riscv-isa-sim)**: The RISC-V ISA Simulator used as the reference model.
+3. **riscv-arch-test**: The standard RISC-V compliance test suite.
+4. **riscv-dv**: The RISC-V instruction generator for UVM-based verification.
+
+Ensure these tools are installed and added to your system's PATH before executing the test scripts.
