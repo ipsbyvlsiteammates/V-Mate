@@ -21,6 +21,8 @@ package riscv_uvm_pkg;
   `include "riscv_priv_test.sv"
   `include "riscv_ext_test.sv"
   `include "riscv_fp_test.sv"
+`include "riscv_corner_seqs.sv"
+`include "riscv_corner_tests.sv"
 endpackage
 
 `endif

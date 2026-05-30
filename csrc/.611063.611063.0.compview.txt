@@ -1,6 +1,0 @@
-Command exited with non-zero status 1
-{"vcs1":{"timestamp_begin":1779381095.637964129, "rt":0.08, "ut":0.04, "st":0.03}}
-{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1779381095.322196137}
-{"VCS_COMP_START_TIME": 1779381095.322196137}
-{"VCS_COMP_END_TIME": 1779381095.806743114}
-{"VCS_USER_OPTIONS": "-f filelist_arch_test.f"}

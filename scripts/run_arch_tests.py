@@ -1,5 +1,5 @@
 import os
-os.environ['PATH'] = '/home/guy/Sagi/riscv_processor/dtc:' + os.environ.get('PATH', '')
+os.environ['PATH'] = '/home/guy/Sagi/riscv_processor/dtc_install/bin:/home/guy/Sagi/riscv_processor/bin:/opt/riscv/bin:' + os.environ.get('PATH', '')
 import os
 import subprocess
 import glob
@@ -15,7 +15,7 @@ def main():
         subprocess.run(["make", f"CONFIG_FILES=config/cores/sagi_rv32imafd/test_config.yaml", f"EXTENSIONS={ext}", "JOBS=8"], check=True)
     os.chdir("/home/guy/Sagi/riscv_processor")
 
-    elfs = glob.glob("/home/guy/Sagi/riscv_processor/riscv-arch-test/work/sagi_rv32imafd/elfs/**/*.elf", recursive=True)
+    elfs = glob.glob("/home/guy/Sagi/riscv_processor/riscv-arch-test/work/sagi_rv32imafd/build/**/*.elf", recursive=True)
     elfs.sort()
     print(f"Found {len(elfs)} ELFs.")
 

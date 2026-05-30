@@ -1,9 +1,0 @@
-{"vcs1":{"timestamp_begin":1779381087.802645416, "rt":0.43, "ut":0.26, "st":0.10}}
-{"vcselab":{"timestamp_begin":1779381088.342024629, "rt":0.20, "ut":0.16, "st":0.02}}
-{"link":{"timestamp_begin":1779381088.612234085, "rt":0.25, "ut":0.16, "st":0.09}}
-{"SNPS_VCS_INTERNAL_ROOT_START_TIME": 1779381087.387924701}
-{"VCS_COMP_START_TIME": 1779381087.387924701}
-{"VCS_COMP_END_TIME": 1779381089.446209039}
-{"VCS_USER_OPTIONS": "-sverilog rtl/core/fp_pkg.sv rtl/core/fp_unpack.sv rtl/core/fp_round_pack.sv rtl/core/fp_fma.sv sim/tb_fpu_debug.sv -R"}
-{"vcs1": {"peak_mem": 405056}}
-{"vcselab": {"peak_mem": 244132}}
