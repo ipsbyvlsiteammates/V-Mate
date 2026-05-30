@@ -82,6 +82,32 @@ def main():
     # Compile UVM
 #     run_cmd(["bash", "compile_uvm.sh"], cwd=sim_dir)
     
+    # Setup corner cases
+    corner_cases_dir = "/home/guy/Sagi/riscv_processor/tb/uvm/corner_cases"
+    os.system(f"cp {corner_cases_dir}/*_test.S {riscv_dv_dir}/asm_tests/")
+    
+    yaml_path = f"{riscv_dv_dir}/target/rv32imafdc/testlist.yaml"
+    with open(yaml_path, "r") as f:
+        yaml_content = f.read()
+    
+    with open(yaml_path, "a") as f:
+        for test in tests:
+            if f"- test: {test}" not in yaml_content:
+                f.write(f"\n- test: {test}\n")
+                f.write(f"  description: >\n")
+                f.write(f"    Complex corner case test: {test}\n")
+                f.write(f"  asm_tests: <riscv_dv_root>/asm_tests/{test}.S\n")
+                f.write(f"  iterations: 1\n")
+                f.write(f"  rtl_test: core_base_test\n")
+                
+    iss_yaml = f"{riscv_dv_dir}/yaml/iss.yaml"
+    with open(iss_yaml, "r") as f:
+        iss_content = f.read()
+    if "--misaligned" in iss_content:
+        iss_content = iss_content.replace("--misaligned", "")
+        with open(iss_yaml, "w") as f:
+            f.write(iss_content)
+
     for test in tests:
         print(f"\n--- Running {test} ---")
         

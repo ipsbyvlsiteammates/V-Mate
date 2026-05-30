@@ -1,0 +1,12 @@
+#include "riscv_test.h"
+RVTEST_RV32U
+RVTEST_CODE_BEGIN
+  nop
+  j pass
+fail:
+  RVTEST_FAIL
+pass:
+  RVTEST_PASS
+RVTEST_CODE_END
+RVTEST_DATA_BEGIN
+RVTEST_DATA_END
